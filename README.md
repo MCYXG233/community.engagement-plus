@@ -28,6 +28,31 @@ git clone git@github.com:MCYXG233/community.engagement-plus.git CommunityEngagem
 
 重启 MaiBot 即可加载插件。
 
+## 更新日志
+
+### v1.0.0（2025-08-03）
+
+**主要功能**
+
+- 节奏控制：发言节流、刷屏拦截、复读检测、冷场提醒
+- 质量优化：表情去重、复读合并、链接去重
+- 互动娱乐：投票、抽奖、打卡、早安晚安、接龙
+- 氛围监测：群温度计、活跃榜、新人欢迎、潜水党召回
+- 记忆增强：用户画像聚合、共同记忆回顾
+- 风控过滤：关键词屏蔽、钓鱼链接拦截、诱导分享检测
+- 输入解析：@ 检测、回复上下文提取
+- 输出美化：分段发送、长文折叠、表情插入
+- 人格切换：元气/毒舌/温柔/学术 四套预设人格
+- 隐私保护：敏感词脱敏、数据导出、注销清理
+
+**技术细节**
+
+- 10 大功能模块独立拆分，边界清晰
+- 22 个 Command + 2 个 EventHandler + 2 个 HookHandler + 4 个 Tool
+- 通过 `ctx.*` 复用 MaiBot 原生能力（db/llm/person/message/maisaka/emoji）
+- PluginConfigBase 配置模型支持 WebUI 热更新
+- 投票/接龙数据持久化到 `data_dir`
+
 ## 命令列表
 
 ### 互动娱乐

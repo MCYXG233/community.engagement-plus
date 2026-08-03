@@ -1,57 +1,102 @@
-# CommunityEngagementPlus — 社区互动增强插件
+# 社区互动增强插件 v1.0.0
 
-MaiBot 第三方插件，全方位增强群聊社区互动体验。
+> **插件说明**：CommunityEngagementPlus 是 MaiBot 第三方社区互动增强插件，提供 10 大功能模块。
+>
+> 作者：[MCYXG233](https://github.com/MCYXG233)
+>
+> 仓库：[community.engagement-plus](https://github.com/MCYXG233/community.engagement-plus)
 
-## 功能模块
+---
 
-| 模块 | 功能 | 说明 |
-|------|------|------|
-| 节奏控制 | 发言节流、刷屏拦截、复读检测、冷场提醒 | 防止消息刷屏，检测复读行为 |
-| 质量优化 | 表情去重、复读合并、链接去重 | 优化消息质量，减少冗余 |
-| 互动娱乐 | 投票、抽奖、打卡、早安晚安、接龙 | 丰富的群内互动玩法 |
-| 氛围监测 | 群温度计、活跃榜、新人欢迎、潜水召回 | 实时监测群聊活跃度 |
-| 记忆增强 | 用户画像聚合、共同记忆回顾 | 只读聚合，增强对话记忆 |
-| 风控过滤 | 关键词屏蔽、钓鱼链接、诱导分享 | 自动拦截违规内容 |
-| 输入解析 | @ 检测、回复上下文、引用追溯 | 解析消息结构化信息 |
-| 输出美化 | 分段发送、长文折叠、表情插入 | 优化消息输出格式 |
-| 人格切换 | 4 套预设人格、语气调节、风格切换 | 支持元气/毒舌/温柔/学术 |
-| 隐私保护 | 敏感词脱敏、数据导出、注销清理 | 保护用户隐私数据 |
+## 功能说明
 
-## 安装
+- **节奏控制**：发言节流、刷屏拦截、复读检测、冷场提醒
+- **质量优化**：表情去重、复读合并、链接去重
+- **互动娱乐**：投票、抽奖、打卡、早安晚安、接龙
+- **氛围监测**：群温度计、活跃榜、新人欢迎、潜水党召回
+- **记忆增强**：用户画像聚合、共同记忆回顾
+- **风控过滤**：关键词屏蔽、钓鱼链接拦截、诱导分享检测
+- **输入解析**：@ 检测、回复上下文提取、引用追溯
+- **输出美化**：分段发送、长文折叠、表情插入
+- **人格切换**：元气/毒舌/温柔/学术 四套预设人格
+- **隐私保护**：敏感词脱敏、数据导出、注销清理
 
-将插件目录放到 MaiBot 的 `plugins/` 下：
+---
 
-```bash
-cd plugins
-git clone git@github.com:MCYXG233/community.engagement-plus.git CommunityEngagementPlus
-```
+## 快速开始
 
-重启 MaiBot 即可加载插件。
+1. 安装 SDK：`pip install maibot-plugin-sdk>=2.7.1`
+2. 将 `CommunityEngagementPlus` 放入 MaiBot 插件目录（`plugins/` 文件夹）。
+   ```bash
+   cd plugins
+   git clone git@github.com:MCYXG233/community.engagement-plus.git CommunityEngagementPlus
+   ```
+3. 启动 MaiBot，插件会自动加载。
+4. 在群聊中发送 `/社区帮助` 查看所有可用命令。
 
-## 更新日志
+---
 
-### v1.0.0（2025-08-03）
+## 插件配置
 
-**主要功能**
+配置文件：`CommunityEngagementPlus/config.toml`（首次加载后自动生成）
 
-- 节奏控制：发言节流、刷屏拦截、复读检测、冷场提醒
-- 质量优化：表情去重、复读合并、链接去重
-- 互动娱乐：投票、抽奖、打卡、早安晚安、接龙
-- 氛围监测：群温度计、活跃榜、新人欢迎、潜水党召回
-- 记忆增强：用户画像聚合、共同记忆回顾
-- 风控过滤：关键词屏蔽、钓鱼链接拦截、诱导分享检测
-- 输入解析：@ 检测、回复上下文提取
-- 输出美化：分段发送、长文折叠、表情插入
-- 人格切换：元气/毒舌/温柔/学术 四套预设人格
-- 隐私保护：敏感词脱敏、数据导出、注销清理
+### plugin 基础配置
 
-**技术细节**
+- `enabled`：是否启用插件，默认 `true`。
 
-- 10 大功能模块独立拆分，边界清晰
-- 22 个 Command + 2 个 EventHandler + 2 个 HookHandler + 4 个 Tool
-- 通过 `ctx.*` 复用 MaiBot 原生能力（db/llm/person/message/maisaka/emoji）
-- PluginConfigBase 配置模型支持 WebUI 热更新
-- 投票/接龙数据持久化到 `data_dir`
+### rhythm 节奏控制
+
+- `enabled`：是否启用，默认 `true`。
+- `throttle_interval`：发言节流间隔（秒），默认 `3`。
+- `flood_threshold`：刷屏阈值（条/10秒），默认 `5`。
+- `repeat_detection_count`：复读检测阈值（人），默认 `2`。
+- `silence_reminder_minutes`：冷场提醒阈值（分钟），默认 `30`。
+
+### quality 质量优化
+
+- `enabled`：是否启用，默认 `true`。
+- `dedup_window`：去重窗口（秒），默认 `60`。
+
+### entertainment 互动娱乐
+
+- `enabled`：是否启用，默认 `true`。
+
+### atmosphere 氛围监测
+
+- `enabled`：是否启用，默认 `true`。
+- `welcome_enabled`：新人欢迎开关，默认 `true`。
+
+### memory 记忆增强
+
+- `enabled`：是否启用，默认 `true`。
+- `profile_fields`：画像统计字段列表，默认 `["活跃时段", "常用表情", "发言主题"]`。
+
+### security 风控过滤
+
+- `enabled`：是否启用，默认 `true`。
+- `blocked_words`：屏蔽词列表，默认为空。
+- `fishing_url_patterns`：钓鱼链接正则，默认内置常见短链接。
+
+### input_parse 输入解析
+
+- `enabled`：是否启用，默认 `true`。
+
+### output_format 输出美化
+
+- `enabled`：是否启用，默认 `true`。
+- `max_length`：长文折叠阈值（字符），默认 `500`。
+
+### persona 人格切换
+
+- `enabled`：是否启用，默认 `true`。
+- `default_persona`：默认人格名称，默认 `元气`。
+
+### privacy 隐私保护
+
+- `enabled`：是否启用，默认 `true`。
+- `sensitive_patterns`：脱敏正则列表，默认内置手机号/邮箱/身份证。
+
+---
 
 ## 命令列表
 
@@ -106,53 +151,33 @@ git clone git@github.com:MCYXG233/community.engagement-plus.git CommunityEngagem
 |------|------|
 | `/社区帮助` | 查看所有命令帮助 |
 
-## 配置
+---
 
-插件支持通过 MaiBot WebUI 进行配置，每个模块可独立开关。配置项包括：
+## 使用建议
 
-- **节奏控制**：节流间隔、刷屏阈值、复读检测人数、冷场提醒时间
-- **质量优化**：去重窗口时间
-- **氛围监测**：新人欢迎开关
-- **记忆增强**：画像统计字段
-- **风控过滤**：屏蔽词列表、钓鱼链接正则
-- **输出美化**：长文折叠阈值
-- **人格切换**：默认人格
-- **隐私保护**：脱敏正则模式
+- 强烈建议在更新插件前备份当前插件文件，以免意外丢失。
+- 风控过滤的屏蔽词和钓鱼链接正则可在配置文件中自定义。
+- 人格切换仅影响当前聊天流，不同群可设置不同人格。
+- 打卡数据和投票数据存储在 MaiBot 数据库中，卸载插件不会丢失。
 
-## 技术架构
+---
 
-```
-plugin.py          — 主入口，装饰器注册，生命周期管理
-config.py          — PluginConfigBase 配置模型（11 个配置节）
-modules/
-├── rhythm.py      — 节奏控制（EventHandler 拦截）
-├── quality.py     — 质量优化（HookHandler 处理）
-├── entertainment.py — 互动娱乐（Command 命令 + DB 持久化）
-├── atmosphere.py  — 氛围监测（message/person 查询）
-├── memory_enhance.py — 记忆增强（LLM + maisaka）
-├── security.py    — 风控过滤（正则匹配拦截）
-├── input_parse.py — 输入解析（HookHandler）
-├── output_format.py — 输出美化（HookHandler）
-├── persona.py     — 人格切换（maisaka 上下文注入）
-└── privacy.py     — 隐私保护（脱敏/导出/清理）
-```
+## 更新日志
 
-### 原生能力复用
+### 版本 1.0.0
 
-本插件通过 `ctx.*` 能力代理与 MaiBot 原生模块交互，不重复造轮子：
+- 完成 10 大功能模块开发：节奏控制、质量优化、互动娱乐、氛围监测、记忆增强、风控过滤、输入解析、输出美化、人格切换、隐私保护
+- 使用 `@Tool`/`@Command`/`@EventHandler`/`@HookHandler` 装饰器
+- 使用 `PluginConfigBase` 定义强类型配置（11 个配置节）
+- 实现三个必需的生命周期方法：`on_load()`、`on_unload()`、`on_config_update()`
+- 添加 `create_plugin()` 工厂函数
+- 通过 `ctx.*` 能力代理复用 MaiBot 原生能力（db/llm/person/message/maisaka/emoji/frequency）
+- 22 个 Command + 2 个 EventHandler + 2 个 HookHandler + 4 个 Tool
+- 投票/接龙数据持久化，打卡记录存入数据库
 
-- `ctx.db` — 数据库 CRUD（打卡记录、投票数据）
-- `ctx.llm` — LLM 生成（早安晚安、记忆摘要、人格风格）
-- `ctx.person` — 人物画像（用户信息读取）
-- `ctx.message` — 消息查询（活跃榜、历史回顾）
-- `ctx.maisaka` — 主动任务（冷场提醒、早安晚安定时）
-- `ctx.frequency` — 频率控制（节奏节流辅助）
-- `ctx.emoji` — 表情代理（表情去重、插入）
+---
 
-## 许可证
+## 致谢
 
-MIT License
-
-## 作者
-
-[MCYXG233](https://github.com/MCYXG233)
+- MaiBot 团队：[Mai-with-u/maibot](https://github.com/MaiM-with-u/maibot)
+- MaiBot Plugin SDK：[maibot-plugin-sdk](https://github.com/Mai-with-u/maibot-plugin-sdk)

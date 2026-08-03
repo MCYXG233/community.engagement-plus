@@ -30,7 +30,9 @@
     "maisaka.context.append"
   ],
   "i18n": {
-    "default_locale": "zh-CN"
+    "default_locale": "zh-CN",
+    "locales_path": "_locales",
+    "supported_locales": ["zh-CN"]
   },
   "id": "small_sunshine.community.engagement-plus"
 }

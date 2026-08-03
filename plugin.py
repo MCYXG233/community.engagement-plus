@@ -197,149 +197,172 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
             "/注销 — 注销并清理数据\n"
         )
         await self.ctx.send.text(help_text, stream_id)
+        return True, "帮助已发送", 2
 
     # ─── 互动娱乐命令 ──────────────────────────────────────
 
     @Command("投票", description="发起投票", pattern=r"^/投票\s+(?P<options>.+)$")
-    async def handle_create_vote(self, stream_id: str = "", user_id: str = "", matched_groups: dict | None = None, **kwargs) -> None:
+    async def handle_create_vote(self, stream_id: str = "", user_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:
         """发起投票。"""
         raw = (matched_groups or {}).get("options", "")
         options = [o.strip() for o in raw.split() if o.strip()]
         result = await self._entertainment.create_vote(stream_id, user_id, options)
         await self.ctx.send.text(result, stream_id)
+        return True, result, 2
 
     @Command("投票选择", description="投票选择", pattern=r"^/投票(?P<number>\d+)\s*$")
-    async def handle_cast_vote(self, stream_id: str = "", user_id: str = "", matched_groups: dict | None = None, **kwargs) -> None:
+    async def handle_cast_vote(self, stream_id: str = "", user_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:
         """投票。"""
         number = int((matched_groups or {}).get("number", "1")) - 1
         result = await self._entertainment.cast_vote(stream_id, user_id, number)
         await self.ctx.send.text(result, stream_id)
+        return True, result, 2
 
     @Command("投票结果", description="查看投票结果", pattern=r"^/投票结果\s*$")
-    async def handle_vote_result(self, stream_id: str = "", **kwargs) -> None:
+    async def handle_vote_result(self, stream_id: str = "", **kwargs) -> tuple:
         """查看投票结果。"""
         result = await self._entertainment.get_vote_result(stream_id)
         await self.ctx.send.text(result, stream_id)
+        return True, result, 2
 
     @Command("结束投票", description="结束投票", pattern=r"^/结束投票\s*$")
-    async def handle_end_vote(self, stream_id: str = "", **kwargs) -> None:
+    async def handle_end_vote(self, stream_id: str = "", **kwargs) -> tuple:
         """结束投票。"""
         result = await self._entertainment.end_vote(stream_id)
         await self.ctx.send.text(result, stream_id)
+        return True, result, 2
 
     @Command("抽奖", description="抽奖", pattern=r"^/抽奖\s*(?P<count>\d*)\s*$")
-    async def handle_lottery(self, stream_id: str = "", matched_groups: dict | None = None, **kwargs) -> None:
+    async def handle_lottery(self, stream_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:
         """抽奖。"""
         count_str = (matched_groups or {}).get("count", "1")
         count = int(count_str) if count_str else 1
         result = await self._entertainment.lottery(stream_id, count)
         await self.ctx.send.text(result, stream_id)
+        return True, result, 2
 
     @Command("打卡", description="每日签到", pattern=r"^/打卡\s*$")
-    async def handle_check_in(self, stream_id: str = "", user_id: str = "", **kwargs) -> None:
+    async def handle_check_in(self, stream_id: str = "", user_id: str = "", **kwargs) -> tuple:
         """每日签到。"""
         result = await self._entertainment.check_in(stream_id, user_id)
         await self.ctx.send.text(result, stream_id)
+        return True, result, 2
 
     @Command("连续打卡", description="查看连续打卡天数", pattern=r"^/连续打卡\s*$")
-    async def handle_streak(self, stream_id: str = "", user_id: str = "", **kwargs) -> None:
+    async def handle_streak(self, stream_id: str = "", user_id: str = "", **kwargs) -> tuple:
         """查看连续打卡天数。"""
         streak = await self._entertainment._calc_streak(stream_id, user_id)
-        await self.ctx.send.text(f"连续打卡 {streak} 天", stream_id)
+        msg = f"连续打卡 {streak} 天"
+        await self.ctx.send.text(msg, stream_id)
+        return True, msg, 2
 
     @Command("早安", description="早安问候", pattern=r"^/早安\s*$")
-    async def handle_gmorning(self, stream_id: str = "", user_id: str = "", **kwargs) -> None:
+    async def handle_gmorning(self, stream_id: str = "", user_id: str = "", **kwargs) -> tuple:
         """早安问候。"""
         result = await self._entertainment.greeting(stream_id, user_id, "早安")
         await self.ctx.send.text(result, stream_id)
+        return True, result, 2
 
     @Command("晚安", description="晚安问候", pattern=r"^/晚安\s*$")
-    async def handle_gnight(self, stream_id: str = "", user_id: str = "", **kwargs) -> None:
+    async def handle_gnight(self, stream_id: str = "", user_id: str = "", **kwargs) -> tuple:
         """晚安问候。"""
         result = await self._entertainment.greeting(stream_id, user_id, "晚安")
         await self.ctx.send.text(result, stream_id)
+        return True, result, 2
 
     @Command("接龙", description="发起接龙", pattern=r"^/接龙\s+(?P<content>.+)$")
-    async def handle_start_chain(self, stream_id: str = "", user_id: str = "", matched_groups: dict | None = None, **kwargs) -> None:
+    async def handle_start_chain(self, stream_id: str = "", user_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:
         """发起接龙。"""
         content = (matched_groups or {}).get("content", "")
         result = await self._entertainment.start_chain(stream_id, user_id, content)
         await self.ctx.send.text(result, stream_id)
+        return True, result, 2
 
     @Command("加入接龙", description="参与接龙", pattern=r"^/加入接龙\s+(?P<text>.+)$")
-    async def handle_join_chain(self, stream_id: str = "", user_id: str = "", matched_groups: dict | None = None, **kwargs) -> None:
+    async def handle_join_chain(self, stream_id: str = "", user_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:
         """参与接龙。"""
         text = (matched_groups or {}).get("text", "")
         result = await self._entertainment.join_chain(stream_id, user_id, text)
         await self.ctx.send.text(result, stream_id)
+        return True, result, 2
 
     # ─── 氛围监测命令 ──────────────────────────────────────
 
     @Command("活跃榜", description="查看活跃排行", pattern=r"^/活跃榜\s*(?P<days>\d*)\s*$")
-    async def handle_active_rank(self, stream_id: str = "", matched_groups: dict | None = None, **kwargs) -> None:
+    async def handle_active_rank(self, stream_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:
         """查看活跃排行。"""
         days_str = (matched_groups or {}).get("days", "7")
         days = int(days_str) if days_str else 7
         result = await self._atmosphere.get_active_rank(stream_id, days)
         await self.ctx.send.text(result, stream_id)
+        return True, result, 2
 
     @Command("群温度", description="查看群活跃温度", pattern=r"^/群温度\s*$")
-    async def handle_temperature(self, stream_id: str = "", **kwargs) -> None:
+    async def handle_temperature(self, stream_id: str = "", **kwargs) -> tuple:
         """查看群活跃温度。"""
         result = await self._atmosphere.get_temperature(stream_id)
         await self.ctx.send.text(result, stream_id)
+        return True, result, 2
 
     @Command("潜水", description="查看潜水用户", pattern=r"^/潜水\s*(?P<days>\d*)\s*$")
-    async def handle_lurkers(self, stream_id: str = "", matched_groups: dict | None = None, **kwargs) -> None:
+    async def handle_lurkers(self, stream_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:
         """查看潜水用户。"""
         days_str = (matched_groups or {}).get("days", "7")
         days = int(days_str) if days_str else 7
         result = await self._atmosphere.get_lurkers(stream_id, days)
         await self.ctx.send.text(result, stream_id)
+        return True, result, 2
 
     # ─── 记忆增强命令 ──────────────────────────────────────
 
     @Command("画像", description="查看用户画像", pattern=r"^/画像\s*(?P<user>.*)\s*$")
-    async def handle_profile(self, stream_id: str = "", user_id: str = "", matched_groups: dict | None = None, **kwargs) -> None:
+    async def handle_profile(self, stream_id: str = "", user_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:
         """查看用户画像。"""
         target_user = (matched_groups or {}).get("user", "").strip() or user_id
         result = await self._memory.get_user_profile(stream_id, target_user)
         await self.ctx.send.text(result, stream_id)
+        return True, result, 2
 
     @Command("回顾", description="共同记忆回顾", pattern=r"^/回顾\s*$")
-    async def handle_recall(self, stream_id: str = "", **kwargs) -> None:
+    async def handle_recall(self, stream_id: str = "", **kwargs) -> tuple:
         """共同记忆回顾。"""
         result = await self._memory.memory_recall(stream_id)
         await self.ctx.send.text(result, stream_id)
+        return True, result, 2
 
     # ─── 人格切换命令 ──────────────────────────────────────
 
     @Command("切换人格", description="切换人格", pattern=r"^/切换人格\s+(?P<name>.+)$")
-    async def handle_switch_persona(self, stream_id: str = "", matched_groups: dict | None = None, **kwargs) -> None:
+    async def handle_switch_persona(self, stream_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:
         """切换人格。"""
         name = (matched_groups or {}).get("name", "")
         result = await self._persona.switch_persona(stream_id, name)
         await self.ctx.send.text(result, stream_id)
+        return True, result, 2
 
     @Command("当前人格", description="查看当前人格", pattern=r"^/当前人格\s*$")
-    async def handle_current_persona(self, stream_id: str = "", **kwargs) -> None:
+    async def handle_current_persona(self, stream_id: str = "", **kwargs) -> tuple:
         """查看当前人格。"""
         current = self._persona.get_current_persona(stream_id)
-        await self.ctx.send.text(f"当前人格：{current}", stream_id)
+        msg = f"当前人格：{current}"
+        await self.ctx.send.text(msg, stream_id)
+        return True, msg, 2
 
     # ─── 隐私保护命令 ──────────────────────────────────────
 
     @Command("导出数据", description="导出用户数据", pattern=r"^/导出数据\s*$")
-    async def handle_export(self, stream_id: str = "", user_id: str = "", **kwargs) -> None:
+    async def handle_export(self, stream_id: str = "", user_id: str = "", **kwargs) -> tuple:
         """导出用户数据。"""
         result = await self._privacy.export_data(user_id)
         await self.ctx.send.text(result, stream_id)
+        return True, result, 2
 
     @Command("注销", description="注销并清理数据", pattern=r"^/注销\s*$")
-    async def handle_delete(self, stream_id: str = "", user_id: str = "", **kwargs) -> None:
+    async def handle_delete(self, stream_id: str = "", user_id: str = "", **kwargs) -> tuple:
         """注销并清理数据。"""
         result = await self._privacy.delete_user_data(user_id)
         await self.ctx.send.text(result, stream_id)
+        return True, result, 2
 
     # ─── Tools ──────────────────────────────────────────────
 

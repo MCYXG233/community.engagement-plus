@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from ..config import PrivacyConfig
 
 # 本插件所有持久化键的统一前缀，防止误删其他插件数据
-_KEY_PREFIX = "ce_"
+_KEY_PREFIX = "community_engagement_"
 
 # 默认敏感词脱敏模式
 DEFAULT_SENSITIVE_PATTERNS = [

@@ -129,16 +129,6 @@ class RhythmModule:
         """发送提醒消息。"""
         await self._ctx.send.text(text, stream_id)
 
-    async def check_silence(self, stream_id: str) -> str | None:
-        """检查群是否冷场，返回冷场提醒文本或 None。"""
-        if not self._config.enabled:
-            return None
-
-        recent = self._ctx.message.get_recent
-        # 通过 maisaka 的主动触发能力检测
-        # 实际调用由插件层的 @Tool 方法触发
-        return None
-
     async def cleanup(self) -> None:
         """清理资源。"""
         self._user_messages.clear()

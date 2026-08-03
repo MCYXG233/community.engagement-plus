@@ -22,18 +22,12 @@
   },
   "dependencies": [],
   "capabilities": [
-    "send.text", "send.emoji", "send.image", "send.hybrid",
-    "config.get", "config.get_plugin",
-    "database.query", "database.save", "database.delete", "database.count",
-    "chat.get_all_streams", "chat.get_group_streams",
-    "message.get_recent", "message.get_by_time_in_chat", "message.get_by_id", "message.build_readable",
+    "send.text",
+    "database.query", "database.save", "database.delete",
+    "message.get_recent", "message.get_by_id", "message.build_readable",
     "llm.generate",
-    "frequency.get_current_talk_value", "frequency.set_adjust",
     "person.get_id", "person.get_value",
-    "emoji.get_random", "emoji.get_by_description", "emoji.get_info", "emoji.register", "emoji.delete",
-    "knowledge.search",
-    "maisaka.context.append", "maisaka.proactive.trigger",
-    "render.html2png"
+    "maisaka.context.append"
   ],
   "i18n": {
     "default_locale": "zh-CN"

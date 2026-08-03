@@ -145,19 +145,6 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
             if stream_id:
                 await self.ctx.send.text(welcome, stream_id)
 
-    # ─── HookHandler: 输入解析钩子 ─────────────────────────
-
-    @HookHandler(
-        "chat.receive.before_process",
-        name="社区互动_输入解析",
-        mode=HookMode.BLOCKING,
-        order=HookOrder.NORMAL,
-    )
-    async def hook_input_parse(self, **kwargs) -> dict:
-        """在消息处理前解析输入结构。"""
-        # 解析 @ 和回复上下文，供后续处理使用
-        return {"action": "continue", "modified_kwargs": kwargs}
-
     # ─── HookHandler: 输出美化钩子 ─────────────────────────
 
     @HookHandler(

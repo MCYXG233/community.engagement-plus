@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any, ClassVar, Dict
 
 from maibot_sdk import (
+    CONFIG_RELOAD_SCOPE_SELF,
     Command,
     EventHandler,
     Field,
@@ -38,20 +39,6 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     """社区互动增强插件"""
 
     config_model = CommunityEngagementConfig
-
-    def __init__(self) -> None:
-        super().__init__()
-        # 模块实例（在 on_load 中初始化）
-        self._rhythm: RhythmModule = None  # type: ignore[assignment]
-        self._quality: QualityModule = None  # type: ignore[assignment]
-        self._entertainment: EntertainmentModule = None  # type: ignore[assignment]
-        self._atmosphere: AtmosphereModule = None  # type: ignore[assignment]
-        self._memory: MemoryEnhanceModule = None  # type: ignore[assignment]
-        self._security: SecurityModule = None  # type: ignore[assignment]
-        self._input_parse: InputParseModule = None  # type: ignore[assignment]
-        self._output_format: OutputFormatModule = None  # type: ignore[assignment]
-        self._persona: PersonaModule = None  # type: ignore[assignment]
-        self._privacy: PrivacyModule = None  # type: ignore[assignment]
 
     # ─── 生命周期 ────────────────────────────────────────────
 
@@ -98,7 +85,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     async def on_config_update(self, scope: str, config_data: dict, version: str) -> None:
         """配置热更新：通知各模块刷新配置"""
         self.ctx.logger.info(f"收到配置更新: scope={scope}, version={version}")
-        if scope == "self":
+        if scope == CONFIG_RELOAD_SCOPE_SELF:
             for module in [
                 self._rhythm, self._quality, self._entertainment,
                 self._atmosphere, self._memory, self._security,
@@ -368,7 +355,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
 
     @Tool(
         "get_group_temperature",
-        description="查询群聊活跃温度",
+        brief_description="查询群聊活跃温度",
         parameters=[
             ToolParameterInfo(
                 name="stream_id",
@@ -385,7 +372,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
 
     @Tool(
         "get_user_profile",
-        description="查询用户画像",
+        brief_description="查询用户画像",
         parameters=[
             ToolParameterInfo(
                 name="stream_id",
@@ -408,7 +395,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
 
     @Tool(
         "recall_memory",
-        description="共同记忆回顾",
+        brief_description="共同记忆回顾",
         parameters=[
             ToolParameterInfo(
                 name="stream_id",
@@ -425,7 +412,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
 
     @Tool(
         "sanitize_text",
-        description="文本敏感词脱敏",
+        brief_description="文本敏感词脱敏",
         parameters=[
             ToolParameterInfo(
                 name="text",

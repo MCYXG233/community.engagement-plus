@@ -13,14 +13,11 @@ from maibot_sdk import (
     EventHandler,
     Field,
     HookHandler,
-    HookMode,
-    HookOrder,
     MaiBotPlugin,
     PluginConfigBase,
     Tool,
-    ToolParameterInfo,
-    ToolParamType,
 )
+from maibot_sdk.types import HookMode, HookOrder, ToolParameterInfo, ToolParamType
 
 from .config import CommunityEngagementConfig
 from .modules import (
@@ -415,23 +412,6 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
         """LLM 工具：共同记忆回顾。"""
         result = await self._memory.memory_recall(stream_id)
         return {"recall": result}
-
-    @Tool(
-        "check_silence",
-        description="检查群是否冷场",
-        parameters=[
-            ToolParameterInfo(
-                name="stream_id",
-                param_type=ToolParamType.STRING,
-                description="聊天流 ID",
-                required=True,
-            ),
-        ],
-    )
-    async def tool_check_silence(self, stream_id: str = "", **kwargs) -> dict:
-        """LLM 工具：检查冷场。"""
-        result = await self._rhythm.check_silence(stream_id)
-        return {"silence_status": result or "未冷场"}
 
     @Tool(
         "sanitize_text",

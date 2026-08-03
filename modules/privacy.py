@@ -12,6 +12,9 @@ if TYPE_CHECKING:
 
     from ..config import PrivacyConfig
 
+# 本插件所有持久化键的统一前缀，防止误删其他插件数据
+_KEY_PREFIX = "ce_"
+
 # 默认敏感词脱敏模式
 DEFAULT_SENSITIVE_PATTERNS = [
     (r"1[3-9]\d{9}", "***手机号***"),  # 手机号
@@ -93,21 +96,21 @@ class PrivacyModule:
             return f"导出失败: {e}"
 
     async def delete_user_data(self, user_id: str) -> str:
-        """注销并清理用户相关数据。"""
+        """注销并清理本插件中该用户的相关数据。"""
         deleted_count = 0
 
         try:
-            # 删除 PluginData 中的相关记录
-            # 查询所有以用户 ID 为键的数据
+            # 只删除本插件前缀的记录，避免误伤其他插件数据
+            search_pattern = f"{_KEY_PREFIX}{user_id}"
             results = await self._ctx.db.query(
                 "PluginData",
                 query_type="count",
-                filters={"key__contains": user_id},
+                filters={"key__contains": search_pattern},
             )
             if results and results > 0:
                 await self._ctx.db.delete(
                     "PluginData",
-                    filters={"key__contains": user_id},
+                    filters={"key__contains": search_pattern},
                 )
                 deleted_count += results
         except Exception as e:

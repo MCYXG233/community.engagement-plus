@@ -143,7 +143,7 @@ class EntertainmentModule:
     async def check_in(self, stream_id: str, user_id: str) -> str:
         """每日签到打卡。"""
         today = time.strftime("%Y-%m-%d")
-        check_in_key = f"checkin_{stream_id}_{user_id}_{today}"
+        check_in_key = f"ce_checkin_{stream_id}_{user_id}_{today}"
 
         # 检查是否已打卡
         existing = await self._ctx.db.query(
@@ -173,7 +173,7 @@ class EntertainmentModule:
         for i in range(365):
             day = today - datetime.timedelta(days=i)
             date_str = day.strftime("%Y-%m-%d")
-            key = f"checkin_{stream_id}_{user_id}_{date_str}"
+            key = f"ce_checkin_{stream_id}_{user_id}_{date_str}"
             result = await self._ctx.db.query(
                 "PluginData",
                 query_type="get",

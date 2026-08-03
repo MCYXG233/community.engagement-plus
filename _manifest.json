@@ -1,0 +1,42 @@
+{
+  "manifest_version": 2,
+  "version": "1.0.0",
+  "name": "社区互动增强",
+  "description": "全方位增强群聊社区互动体验：节奏控制、质量优化、互动娱乐、氛围监测、记忆增强、风控过滤、输入解析、输出美化、人格切换、隐私保护。",
+  "author": {
+    "name": "Small_sunshine",
+    "url": "https://github.com/MCYXG233"
+  },
+  "license": "MIT",
+  "urls": {
+    "repository": "https://github.com/MCYXG233/community.engagement-plus",
+    "homepage": "https://github.com/MCYXG233/community.engagement-plus"
+  },
+  "host_application": {
+    "min_version": "1.0.0",
+    "max_version": "1.99.99"
+  },
+  "sdk": {
+    "min_version": "2.7.1",
+    "max_version": "2.99.99"
+  },
+  "dependencies": [],
+  "capabilities": [
+    "send.text", "send.emoji", "send.image", "send.hybrid",
+    "config.get", "config.get_plugin",
+    "database.query", "database.save", "database.delete", "database.count",
+    "chat.get_all_streams", "chat.get_group_streams",
+    "message.get_recent", "message.get_by_time_in_chat", "message.get_by_id", "message.build_readable",
+    "llm.generate",
+    "frequency.get_current_talk_value", "frequency.set_adjust",
+    "person.get_id", "person.get_value",
+    "emoji.get_random", "emoji.get_by_description", "emoji.get_info", "emoji.register", "emoji.delete",
+    "knowledge.search",
+    "maisaka.context.append", "maisaka.proactive.trigger",
+    "render.html2png"
+  ],
+  "i18n": {
+    "default_locale": "zh-CN"
+  },
+  "id": "small_sunshine.community.engagement-plus"
+}

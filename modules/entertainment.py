@@ -180,6 +180,7 @@ class EntertainmentModule:
         existing = await self._ctx.db.query(
             "PluginData",
             query_type="get",
+            data={},
             filters={"key": check_in_key},
         )
         if existing:

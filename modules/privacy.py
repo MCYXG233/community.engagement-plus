@@ -160,6 +160,7 @@ class PrivacyModule:
             all_records = await self._ctx.db.query(
                 "PluginData",
                 query_type="get",
+                data={},
                 filters={},
                 limit=1000,
             )

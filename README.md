@@ -209,9 +209,11 @@
 - Tool 修复：所有 `@Tool` 使用 `brief_description`（文档推荐）
 - 持久化修复：`load_persistent_data` 恢复投票和接龙状态到内存
 - 性能修复：`_calc_streak` 用 `count` 替代 `get`，遇中断即停止
-- 多 Bot 协调：非 @ 非命令消息跳过节奏控制
-- 管道接入：`quality.check_outgoing`、`input_parse.parse`、`output_format.split_long_message` 全部接入 HookHandler
-- 移除空壳：`check_silence` 空实现、`hook_input_parse` 空钩子
+- 多 Bot 协调：非 @ 非命令消息跳过复读检测，但消息仍被记录
+- segment 修复：`maisaka.context.append` 字段从 `data` 改为 `content`（对齐 SDK 文档）
+- 复读检测修复：`_record_message` 移到多 Bot 协调判断之前，所有消息都参与记录
+- 管道接入：`quality.check_outgoing`、`input_parse.parse` 接入 HookHandler
+- 移除空壳：`check_silence` 空实现、`hook_input_parse` 空钩子、不完整的 `split_remaining` 逻辑
 
 **配置扩展**
 

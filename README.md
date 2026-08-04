@@ -190,7 +190,7 @@
 - 周年纪念：检测用户首次发言日期，匹配时生成周年祝福
 - 节日彩蛋：7 个节日（新年/情人节/劳动节/儿童节/国庆/圣诞/跨年）
 - 情绪仪表盘：调用外部 API 分析群聊情绪
-- 翻译备注：调用外部 API 自动附加翻译
+- 翻译备注：`/翻译` 按需翻译最近一条消息
 - 图片鉴黄：调用外部 API 审核违规图片
 - 关键词高亮：配置的关键词添加 【】 标记
 - 多消息合并：缓冲窗口期内同一用户的连续消息
@@ -198,7 +198,9 @@
 - 心情驱动人格：LLM 情感分析自动切换人格
 - 画像加密：Base64 编码保护用户画像数据
 - 撤回检测：检测消息撤回并通知
-- /节日、/周年、/情绪、/心情 命令
+- /节日、/周年、/情绪、/心情、/翻译 命令
+- @Tool(check_silence)：LLM 可调用冷场状态查询
+- @Tool(sync_cross_session)：LLM 可调用跨会话同步
 
 **代码修复**
 
@@ -212,18 +214,21 @@
 - 多 Bot 协调：非 @ 非命令消息跳过复读检测，但消息仍被记录
 - segment 修复：`maisaka.context.append` 字段从 `data` 改为 `content`（对齐 SDK 文档）
 - 复读检测修复：`_record_message` 移到多 Bot 协调判断之前，所有消息都参与记录
-- 管道接入：`quality.check_outgoing`、`input_parse.parse` 接入 HookHandler
-- 移除空壳：`check_silence` 空实现、`hook_input_parse` 空钩子、不完整的 `split_remaining` 逻辑
+- 翻译修复：从 HookHandler 自动调用改为 `/翻译` 按需命令（避免超时阻塞发送）
+- 链接去重修复：`check_outgoing` 返回空字符串时不再被 `or text` 回退
+- 前缀统一：`entertainment.py` 从 `privacy.py` 导入 `_KEY_PREFIX`，不再硬编码
+- 管道接入：`quality.check_outgoing`、`input_parse.parse`、`input_parse.buffer_message` 接入 HookHandler
+- 移除空壳：`hook_input_parse` 空钩子、不完整的 `split_remaining` 逻辑
 
 **配置扩展**
 
-- 新增外部 API 配置：图片审核、情绪分析、翻译（用户自填 URL + Key）
+- 新增外部 API 配置：图片审核、情绪分析、翻译（用户自填 URL + Key，默认禁用）
 - 新增功能开关：心情驱动、跨会话同步、画像加密、关键词高亮、多消息合并
 - 配置版本升级至 1.1.0
 
 **文档与合规**
 
-- README 新增「隐私与数据说明」章节，列出外部 API 数据流向
+- README 新增「隐私与数据说明」章节，列出外部 API 数据流向和带宽提示
 - manifest `i18n` 保留必填字段 `default_locale`（暂不实现多语言）
 - manifest capabilities 从 30 项精简到 11 项（仅实际使用）
 - 所有 Command 处理函数补全返回三元组 `(success, response, weight)`

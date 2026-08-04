@@ -195,7 +195,9 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
         stream_id = kwargs.get("stream_id", "")
         if text and self._output_format:
             # 质量优化：链接去重 + 关键词高亮
-            text = await self._quality.check_outgoing(text, stream_id) or text
+            optimized = await self._quality.check_outgoing(text, stream_id)
+            if optimized is not None:
+                text = optimized
             # 输出美化：折叠 + 表情（纯本地，<10ms）
             formatted = await self._output_format.format_output(text, stream_id)
             if formatted != text:
@@ -545,6 +547,54 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
         """LLM 工具：文本脱敏。"""
         result = self._privacy.sanitize(text)
         return {"sanitized": result}
+
+    @Tool(
+        "check_silence",
+        brief_description="检查群是否冷场",
+        parameters=[
+            ToolParameterInfo(
+                name="stream_id",
+                param_type=ToolParamType.STRING,
+                description="聊天流 ID",
+                required=True,
+            ),
+        ],
+    )
+    async def tool_check_silence(self, stream_id: str = "", **kwargs) -> dict:
+        """LLM 工具：检查冷场状态。"""
+        result = await self._rhythm.check_silence(stream_id)
+        return {"silence": result or "未冷场"}
+
+    @Tool(
+        "sync_cross_session",
+        brief_description="跨会话同步用户上下文",
+        parameters=[
+            ToolParameterInfo(
+                name="user_id",
+                param_type=ToolParamType.STRING,
+                description="用户 ID",
+                required=True,
+            ),
+            ToolParameterInfo(
+                name="source_stream",
+                param_type=ToolParamType.STRING,
+                description="源聊天流 ID",
+                required=True,
+            ),
+            ToolParameterInfo(
+                name="target_stream",
+                param_type=ToolParamType.STRING,
+                description="目标聊天流 ID",
+                required=True,
+            ),
+        ],
+    )
+    async def tool_sync_cross_session(
+        self, user_id: str = "", source_stream: str = "", target_stream: str = "", **kwargs
+    ) -> dict:
+        """LLM 工具：跨会话同步用户上下文。"""
+        result = await self._memory.sync_cross_session(user_id, source_stream, target_stream)
+        return {"sync": result}
 
 
 def create_plugin() -> CommunityEngagementPlusPlugin:

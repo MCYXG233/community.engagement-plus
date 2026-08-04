@@ -190,13 +190,13 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
         order=HookOrder.NORMAL,
     )
     async def hook_output_format(self, **kwargs) -> dict:
-        """在发送前美化消息格式。"""
+        """在发送前美化消息格式（仅本地操作，不调用外部 API）。"""
         text = kwargs.get("text", "")
         stream_id = kwargs.get("stream_id", "")
         if text and self._output_format:
-            # 质量优化：链接去重
+            # 质量优化：链接去重 + 关键词高亮
             text = await self._quality.check_outgoing(text, stream_id) or text
-            # 输出美化：折叠 + 表情
+            # 输出美化：折叠 + 表情（纯本地，<10ms）
             formatted = await self._output_format.format_output(text, stream_id)
             if formatted != text:
                 kwargs["text"] = formatted
@@ -235,6 +235,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
             "/切换人格 <名称> — 切换人格\n"
             "/当前人格 — 查看当前人格\n"
             "/心情 — 检测当前心情\n"
+            "━━━ 输出美化 ━━━\n"
+            "/翻译 — 翻译最近一条消息\n"
             "━━━ 隐私保护 ━━━\n"
             "/导出数据 — 导出用户数据\n"
             "/注销 — 注销并清理数据\n"
@@ -427,6 +429,30 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
         result = await self._atmosphere.get_sentiment_dashboard(stream_id)
         await self.ctx.send.text(result, stream_id)
         return True, result, 2
+
+    @Command("翻译", description="翻译最近一条消息", pattern=r"^/翻译\s*$")
+    async def handle_translate(self, stream_id: str = "", **kwargs) -> tuple:
+        """翻译最近一条消息。"""
+        recent = await self.ctx.message.get_recent(stream_id, limit=1)
+        if not recent:
+            msg = "没有可翻译的消息"
+            await self.ctx.send.text(msg, stream_id)
+            return True, msg, 2
+
+        text = recent[0].get("processed_plain_text", "")
+        if not text:
+            msg = "最近一条消息无可翻译文本"
+            await self.ctx.send.text(msg, stream_id)
+            return True, msg, 2
+
+        result = await self._output_format.translate(text)
+        if result:
+            await self.ctx.send.text(result, stream_id)
+            return True, result, 2
+
+        msg = "翻译失败，请检查翻译 API 配置"
+        await self.ctx.send.text(msg, stream_id)
+        return True, msg, 2
 
     # ─── 隐私保护命令 ──────────────────────────────────────
 

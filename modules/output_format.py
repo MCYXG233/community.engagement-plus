@@ -18,7 +18,7 @@ class OutputFormatModule:
         self._config = config
 
     async def format_output(self, text: str, stream_id: str) -> str:
-        """格式化输出消息。"""
+        """格式化输出消息（仅本地操作，不调用外部 API）。"""
         if not self._config.enabled or not text:
             return text
 
@@ -29,13 +29,14 @@ class OutputFormatModule:
         # 表情插入
         text = await self._insert_emoji(text)
 
-        # 翻译备注
-        if self._config.translate_api_url and len(text) > 10:
-            translation = await self._translate(text)
-            if translation and translation != text:
-                text = f"{text}\n\n🌐 {translation}"
-
         return text
+
+    async def translate(self, text: str) -> str | None:
+        """按需翻译：调用外部翻译 API。返回翻译结果或 None。"""
+        translation = await self._translate(text)
+        if translation and translation != text:
+            return f"{text}\n\n🌐 {translation}"
+        return None
 
     def _fold_text(self, text: str) -> str:
         """长文折叠：超过阈值时添加折叠标记。"""

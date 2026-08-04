@@ -18,9 +18,10 @@ from maibot_sdk import (
     PluginConfigBase,
     Tool,
 )
-from maibot_sdk.types import HookMode, HookOrder, ToolParameterInfo, ToolParamType
+from maibot_sdk.types import EventType, HookMode, HookOrder, ToolParameterInfo, ToolParamType
 
 from .config import CommunityEngagementConfig
+from .log_config import setup_logging, get_logger
 from .modules import (
     AtmosphereModule,
     EntertainmentModule,
@@ -44,7 +45,10 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
 
     async def on_load(self) -> None:
         """插件加载：初始化 10 个模块实例"""
-        self.ctx.logger.info("社区互动增强插件加载中...")
+        # 初始化日志系统
+        self._plugin_logger = setup_logging(str(self.ctx.paths.data_dir), "community_engagement")
+        self._logger = get_logger("main")
+        self._logger.info("社区互动增强插件加载中...")
 
         # 初始化各模块（使用新配置结构）
         self._rhythm = RhythmModule(self.ctx, self.config.message_control)
@@ -61,11 +65,12 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
         # 加载持久化数据
         await self._entertainment.load_persistent_data()
 
-        self.ctx.logger.info("社区互动增强插件加载完成，共加载 10 个模块")
+        self._logger.info("社区互动增强插件加载完成，共加载 10 个模块")
+        self.ctx.logger.info("社区互动增强插件已加载")
 
     async def on_unload(self) -> None:
         """插件卸载：保存状态、清理资源"""
-        self.ctx.logger.info("社区互动增强插件卸载中...")
+        self._logger.info("社区互动增强插件卸载中...")
 
         # 保存持久化数据
         await self._entertainment.save_persistent_data()
@@ -80,11 +85,12 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
             if hasattr(module, "cleanup"):
                 await module.cleanup()
 
-        self.ctx.logger.info("社区互动增强插件卸载完成")
+        self._logger.info("社区互动增强插件卸载完成")
+        self.ctx.logger.info("社区互动增强插件已卸载")
 
     async def on_config_update(self, scope: str, config_data: dict, version: str) -> None:
         """配置热更新：通知各模块刷新配置"""
-        self.ctx.logger.info(f"收到配置更新: scope={scope}, version={version}")
+        self._logger.info("收到配置更新: scope=%s, version=%s", scope, version)
         if scope == CONFIG_RELOAD_SCOPE_SELF:
             for module in [
                 self._rhythm, self._quality, self._entertainment,
@@ -94,13 +100,14 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
             ]:
                 if hasattr(module, "on_config_update"):
                     await module.on_config_update(config_data)
+            self._logger.info("配置更新已应用")
 
     # ─── EventHandler: 消息过滤器 ───────────────────────────
 
     @EventHandler(
         "消息过滤器",
         description="合并风控+节奏控制：拦截违规内容、刷屏、节流、复读",
-        event_type="on_message_pre_process",
+        event_type=EventType.ON_MESSAGE_PRE_PROCESS,
         intercept_message=True,
         weight=10,
     )
@@ -109,10 +116,13 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
         # 风控检查
         result = await self._security.check_message(message)
         if result is None:
+            self._logger.debug("消息被风控拦截")
             return None
 
         # 节奏检查
         result = await self._rhythm.check_message(message)
+        if result is None:
+            self._logger.debug("消息被节奏控制拦截")
         return result
 
     # ─── EventHandler: 新人欢迎 ─────────────────────────────
@@ -120,7 +130,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @EventHandler(
         "新人欢迎器",
         description="检测新用户首次发言并发送欢迎消息",
-        event_type="on_message",
+        event_type=EventType.ON_MESSAGE,
         intercept_message=False,
         weight=0,
     )
@@ -130,6 +140,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
         if welcome:
             stream_id = message.get("stream_id", message.get("session_id", ""))
             if stream_id:
+                self._logger.info("检测到新用户，发送欢迎消息")
                 await self.ctx.send.text(welcome, stream_id)
 
     # ─── EventHandler: 撤回检测 ─────────────────────────────
@@ -137,7 +148,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @EventHandler(
         "撤回检测器",
         description="检测消息撤回并记录日志",
-        event_type="on_message",
+        event_type=EventType.ON_MESSAGE,
         intercept_message=False,
         weight=0,
     )
@@ -149,7 +160,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
             user_info = message.get("message_info", {}).get("user_info", {})
             nickname = user_info.get("user_nickname", "未知用户")
             stream_id = message.get("stream_id", message.get("session_id", ""))
-            self.ctx.logger.info(f"[撤回检测] {nickname} 撤回了一条消息")
+            self._logger.info("检测到消息撤回: %s", nickname)
             if stream_id:
                 await self.ctx.send.text(f"📋 {nickname} 撤回了一条消息", stream_id)
 
@@ -291,6 +302,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("打卡", description="每日签到", pattern=r"^/打卡\s*$")
     async def handle_check_in(self, stream_id: str = "", user_id: str = "", **kwargs) -> tuple:
         """每日签到。"""
+        self._logger.info("用户 %s 执行打卡", user_id)
         result = await self._entertainment.check_in(stream_id, user_id)
         await self.ctx.send.text(result, stream_id)
         return True, result, 2
@@ -298,6 +310,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("连续打卡", description="查看连续打卡天数", pattern=r"^/连续打卡\s*$")
     async def handle_streak(self, stream_id: str = "", user_id: str = "", **kwargs) -> tuple:
         """查看连续打卡天数。"""
+        self._logger.info("用户 %s 查询连续打卡", user_id)
         streak = await self._entertainment._calc_streak(stream_id, user_id)
         msg = f"连续打卡 {streak} 天"
         await self.ctx.send.text(msg, stream_id)
@@ -306,6 +319,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("早安", description="早安问候", pattern=r"^/早安\s*$")
     async def handle_gmorning(self, stream_id: str = "", user_id: str = "", **kwargs) -> tuple:
         """早安问候。"""
+        self._logger.info("用户 %s 发送早安", user_id)
         result = await self._entertainment.greeting(stream_id, user_id, "早安")
         await self.ctx.send.text(result, stream_id)
         return True, result, 2
@@ -313,6 +327,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("晚安", description="晚安问候", pattern=r"^/晚安\s*$")
     async def handle_gnight(self, stream_id: str = "", user_id: str = "", **kwargs) -> tuple:
         """晚安问候。"""
+        self._logger.info("用户 %s 发送晚安", user_id)
         result = await self._entertainment.greeting(stream_id, user_id, "晚安")
         await self.ctx.send.text(result, stream_id)
         return True, result, 2
@@ -388,6 +403,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     async def handle_profile(self, stream_id: str = "", user_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:
         """查看用户画像。"""
         target_user = (matched_groups or {}).get("user", "").strip() or user_id
+        self._logger.info("查询用户画像: %s", target_user)
         result = await self._memory.get_user_profile(stream_id, target_user)
         await self.ctx.send.text(result, stream_id)
         return True, result, 2
@@ -395,6 +411,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("回顾", description="共同记忆回顾", pattern=r"^/回顾\s*$")
     async def handle_memory_recall(self, stream_id: str = "", **kwargs) -> tuple:
         """共同记忆回顾。"""
+        self._logger.info("执行记忆回顾")
         result = await self._memory.memory_recall(stream_id)
         await self.ctx.send.text(result, stream_id)
         return True, result, 2
@@ -405,6 +422,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     async def handle_switch_persona(self, stream_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:
         """切换人格。"""
         name = (matched_groups or {}).get("name", "")
+        self._logger.info("切换人格: %s", name)
         result = await self._persona.switch_persona(stream_id, name)
         await self.ctx.send.text(result, stream_id)
         return True, result, 2
@@ -461,6 +479,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("导出数据", description="导出用户数据", pattern=r"^/导出数据\s*$")
     async def handle_export(self, stream_id: str = "", user_id: str = "", **kwargs) -> tuple:
         """导出用户数据。"""
+        self._logger.info("用户 %s 导出数据", user_id)
         result = await self._privacy.export_data(user_id)
         await self.ctx.send.text(result, stream_id)
         return True, result, 2
@@ -468,6 +487,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("注销", description="注销并清理数据", pattern=r"^/注销\s*$")
     async def handle_delete(self, stream_id: str = "", user_id: str = "", **kwargs) -> tuple:
         """注销并清理数据。"""
+        self._logger.info("用户 %s 注销并清理数据", user_id)
         result = await self._privacy.delete_user_data(user_id)
         await self.ctx.send.text(result, stream_id)
         return True, result, 2
@@ -488,6 +508,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     )
     async def tool_group_temperature(self, stream_id: str = "", **kwargs) -> dict:
         """LLM 工具：查询群温度。"""
+        self._logger.debug("LLM 调用: 查询群温度")
         result = await self._atmosphere.get_temperature(stream_id)
         return {"temperature": result}
 
@@ -511,6 +532,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     )
     async def tool_user_profile(self, stream_id: str = "", user_id: str = "", **kwargs) -> dict:
         """LLM 工具：查询用户画像。"""
+        self._logger.debug("LLM 调用: 查询用户画像 %s", user_id)
         result = await self._memory.get_user_profile(stream_id, user_id)
         return {"profile": result}
 
@@ -528,6 +550,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     )
     async def tool_recall_memory(self, stream_id: str = "", **kwargs) -> dict:
         """LLM 工具：共同记忆回顾。"""
+        self._logger.debug("LLM 调用: 记忆回顾")
         result = await self._memory.memory_recall(stream_id)
         return {"recall": result}
 
@@ -545,6 +568,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     )
     async def tool_sanitize(self, text: str = "", **kwargs) -> dict:
         """LLM 工具：文本脱敏。"""
+        self._logger.debug("LLM 调用: 文本脱敏")
         result = self._privacy.sanitize(text)
         return {"sanitized": result}
 
@@ -562,6 +586,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     )
     async def tool_check_silence(self, stream_id: str = "", **kwargs) -> dict:
         """LLM 工具：检查冷场状态。"""
+        self._logger.debug("LLM 调用: 检查冷场状态")
         result = await self._rhythm.check_silence(stream_id)
         return {"silence": result or "未冷场"}
 
@@ -593,6 +618,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
         self, user_id: str = "", source_stream: str = "", target_stream: str = "", **kwargs
     ) -> dict:
         """LLM 工具：跨会话同步用户上下文。"""
+        self._logger.debug("LLM 调用: 跨会话同步 %s", user_id)
         result = await self._memory.sync_cross_session(user_id, source_stream, target_stream)
         return {"sync": result}
 

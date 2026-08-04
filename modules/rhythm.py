@@ -42,6 +42,12 @@ class RhythmModule:
         text = self._extract_text(message)
         now = time.time()
 
+        # 记录所有消息（用于复读检测和冷场检测，无论是否为 @ 或命令）
+        if user_id:
+            self._record_message(user_id, stream_id, text, now)
+        if stream_id:
+            self._last_message_time[stream_id] = now
+
         # 发言节流
         if user_id and self._is_throttled(user_id, now):
             self._ctx.logger.debug(f"[节奏控制] 用户 {user_id} 被节流，丢弃消息")
@@ -52,7 +58,7 @@ class RhythmModule:
             await self._send_warning(stream_id, f"检测到刷屏行为，请稍后再发言")
             return None
 
-        # 多 Bot 协调：非 @ 且非命令的消息不触发节奏控制（避免误拦正常聊天）
+        # 多 Bot 协调：非 @ 且非命令的消息跳过复读检测（避免干扰正常聊天）
         is_at = message.get("is_at", False)
         is_command = message.get("is_command", False)
         is_mentioned = message.get("is_mentioned", False)
@@ -64,14 +70,6 @@ class RhythmModule:
             repeat_info = self._check_repeat(stream_id, text, user_id)
             if repeat_info:
                 await self._send_warning(stream_id, repeat_info)
-
-        # 记录消息
-        if user_id:
-            self._record_message(user_id, stream_id, text, now)
-
-        # 更新最后消息时间
-        if stream_id:
-            self._last_message_time[stream_id] = now
 
         return message
 

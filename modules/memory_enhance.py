@@ -92,7 +92,7 @@ class MemoryEnhanceModule:
         try:
             await self._ctx.maisaka.context.append(
                 stream_id,
-                [{"type": "text", "data": text}],
+                [{"type": "text", "content": text}],
             )
         except Exception as e:
             self._ctx.logger.warning(f"追加上下文失败: {e}")
@@ -132,7 +132,7 @@ class MemoryEnhanceModule:
                 sync_text = f"[跨会话同步] 用户 {user_id} 之前说过：{summary}"
                 await self._ctx.maisaka.context.append(
                     target_stream,
-                    [{"type": "text", "data": sync_text}],
+                    [{"type": "text", "content": sync_text}],
                 )
                 return f"已同步用户 {user_id} 的上下文到目标会话"
 

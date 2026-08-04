@@ -86,7 +86,7 @@ class PersonaModule:
         try:
             await self._ctx.maisaka.context.append(
                 stream_id,
-                [{"type": "text", "data": f"[系统指令] {persona_prompt}"}],
+                [{"type": "text", "content": f"[系统指令] {persona_prompt}"}],
             )
         except Exception as e:
             self._ctx.logger.warning(f"注入人格上下文失败: {e}")

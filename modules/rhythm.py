@@ -48,6 +48,13 @@ class RhythmModule:
             await self._send_warning(stream_id, f"检测到刷屏行为，请稍后再发言")
             return None
 
+        # 多 Bot 协调：非 @ 且非命令的消息不触发节奏控制（避免误拦正常聊天）
+        is_at = message.get("is_at", False)
+        is_command = message.get("is_command", False)
+        is_mentioned = message.get("is_mentioned", False)
+        if not is_at and not is_mentioned and not is_command and not text.startswith("/"):
+            return message
+
         # 复读检测（不拦截，仅提醒）
         if text and stream_id:
             repeat_info = self._check_repeat(stream_id, text, user_id)

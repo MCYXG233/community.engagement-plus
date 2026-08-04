@@ -64,10 +64,9 @@ class PersonaModule:
         # 尝试读取用户画像以融合个性化指令
         persona_prompt = template
         try:
-            # 读取用户信息（只读聚合）
-            # 这里可以从 ctx.person 获取用户偏好，融合到人格指令中
-            # 示例：如果用户偏好某种语言风格，可以追加到 persona_prompt
-            pass
+            # 从 ctx.person 读取用户偏好，融合到人格指令中
+            # 如果用户有语言偏好，追加到指令中
+            pass  # 当前版本仅使用预设模板，后续可扩展
         except Exception as e:
             self._ctx.logger.warning(f"读取用户画像失败: {e}")
 

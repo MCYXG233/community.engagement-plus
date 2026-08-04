@@ -167,6 +167,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
             "/连续打卡 — 查看连续打卡天数\n"
             "/早安 — 早安问候\n"
             "/晚安 — 晚安问候\n"
+            "/节日 — 今日节日彩蛋\n"
             "/接龙 <内容> — 发起接龙\n"
             "/加入接龙 <内容> — 参与接龙\n"
             "━━━ 氛围监测 ━━━\n"
@@ -256,6 +257,17 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
         result = await self._entertainment.greeting(stream_id, user_id, "晚安")
         await self.ctx.send.text(result, stream_id)
         return True, result, 2
+
+    @Command("节日", description="查看今日节日彩蛋", pattern=r"^/节日\s*$")
+    async def handle_holiday(self, stream_id: str = "", **kwargs) -> tuple:
+        """查看今日节日彩蛋。"""
+        greeting = self._entertainment.get_holiday_greeting()
+        if greeting:
+            await self.ctx.send.text(greeting, stream_id)
+            return True, greeting, 2
+        msg = "今天没有节日彩蛋哦~"
+        await self.ctx.send.text(msg, stream_id)
+        return True, msg, 2
 
     @Command("接龙", description="发起接龙", pattern=r"^/接龙\s+(?P<content>.+)$")
     async def handle_start_chain(self, stream_id: str = "", user_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:

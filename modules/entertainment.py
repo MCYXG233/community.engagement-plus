@@ -38,7 +38,18 @@ class ChainSession:
 
 
 class EntertainmentModule:
-    """互动娱乐模块：提供投票、抽奖、打卡、早晚问候、接龙等功能。"""
+    """互动娱乐模块：提供投票、抽奖、打卡、早晚问候、接龙、节日彩蛋等功能。"""
+
+    # 节日彩蛋配置
+    HOLIDAYS = {
+        "01-01": "新年快乐！新的一年，万事如意！🎉",
+        "02-14": "情人节快乐！有情人终成眷属！💕",
+        "05-01": "劳动节快乐！辛苦了，好好休息！🎉",
+        "06-01": "儿童节快乐！保持童心，永远年轻！🎈",
+        "10-01": "国庆节快乐！祝福祖国！🇨🇳",
+        "12-25": "圣诞节快乐！Merry Christmas! 🎄",
+        "12-31": "跨年快乐！告别旧岁，迎接新年！🎆",
+    }
 
     def __init__(self, ctx: PluginContext, config: EntertainmentConfig) -> None:
         self._ctx = ctx
@@ -166,8 +177,8 @@ class EntertainmentModule:
 
     async def _calc_streak(self, stream_id: str, user_id: str) -> int:
         """计算连续打卡天数。"""
-        streak = 0
         import datetime
+        streak = 0
         today = datetime.date.today()
 
         for i in range(365):
@@ -176,10 +187,10 @@ class EntertainmentModule:
             key = f"community_engagement_checkin_{stream_id}_{user_id}_{date_str}"
             result = await self._ctx.db.query(
                 "PluginData",
-                query_type="get",
+                query_type="count",
                 filters={"key": key},
             )
-            if result:
+            if result and result > 0:
                 streak += 1
             else:
                 break
@@ -210,6 +221,13 @@ class EntertainmentModule:
         if greeting_type == "早安":
             return f"{name}，早安！今天也要元气满满哦~"
         return f"{name}，晚安！好梦~"
+
+    # ─── 节日彩蛋 ────────────────────────────────────────────
+
+    def get_holiday_greeting(self) -> str | None:
+        """检查今天是否有节日彩蛋，返回问候语或 None。"""
+        today = time.strftime("%m-%d")
+        return self.HOLIDAYS.get(today)
 
     # ─── 接龙 ────────────────────────────────────────────────
 
@@ -252,7 +270,22 @@ class EntertainmentModule:
         if data_file.exists():
             try:
                 data = json.loads(data_file.read_text(encoding="utf-8"))
-                # 恢复投票状态（简化：仅恢复结构，不恢复内存状态）
+                # 恢复投票状态
+                for sid, vdata in data.get("votes", {}).items():
+                    self._votes[sid] = VoteSession(
+                        creator_id=vdata["creator_id"],
+                        options=vdata["options"],
+                        votes=vdata.get("votes", {}),
+                        is_active=vdata.get("is_active", True),
+                    )
+                # 恢复接龙状态
+                for sid, cdata in data.get("chains", {}).items():
+                    self._chains[sid] = ChainSession(
+                        creator_id=cdata["creator_id"],
+                        content=cdata["content"],
+                        entries=cdata.get("entries", []),
+                        is_active=cdata.get("is_active", True),
+                    )
                 self._ctx.logger.info("互动娱乐持久化数据已加载")
             except Exception as e:
                 self._ctx.logger.warning(f"加载互动娱乐数据失败: {e}")

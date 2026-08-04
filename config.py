@@ -5,22 +5,31 @@ from typing import ClassVar, List
 from maibot_sdk import Field, PluginConfigBase
 
 
+class PluginSectionConfig(PluginConfigBase):
+    """插件基础配置（SDK 必需）。"""
+
+    __ui_label__: ClassVar[str] = "插件"
+    __ui_icon__: ClassVar[str] = "settings"
+    __ui_order__: ClassVar[int] = 0
+
+    config_version: str = Field(
+        default="1.2.0",
+        description="配置版本号",
+        json_schema_extra={"label": "配置版本", "disabled": True},
+    )
+
+
 class GeneralConfig(PluginConfigBase):
     """通用设置。"""
 
     __ui_label__: ClassVar[str] = "通用设置"
-    __ui_icon__: ClassVar[str] = "settings"
-    __ui_order__: ClassVar[int] = 0
+    __ui_icon__: ClassVar[str] = "tune"
+    __ui_order__: ClassVar[int] = 1
 
     enabled: bool = Field(
         default=True,
         description="启用社区互动增强插件",
         json_schema_extra={"label": "启用插件"},
-    )
-    config_version: str = Field(
-        default="1.2.0",
-        description="配置版本号",
-        json_schema_extra={"label": "配置版本", "disabled": True},
     )
 
 
@@ -307,6 +316,7 @@ class PrivacyConfig(PluginConfigBase):
 class CommunityEngagementConfig(PluginConfigBase):
     """社区互动增强插件 — 顶层配置模型。"""
 
+    plugin: PluginSectionConfig = Field(default_factory=PluginSectionConfig, description="插件基础配置")
     general: GeneralConfig = Field(default_factory=GeneralConfig, description="通用设置")
     message_control: MessageControlConfig = Field(default_factory=MessageControlConfig, description="发言管理")
     message_optimize: MessageOptimizeConfig = Field(default_factory=MessageOptimizeConfig, description="消息优化")

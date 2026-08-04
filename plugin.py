@@ -270,11 +270,26 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
 
         return None
 
+    # ─── 辅助方法 ───────────────────────────────────────────
+
+    def _check_enabled(self) -> bool:
+        """检查插件是否启用。"""
+        return self._config.general.enabled
+
+    def _disabled_response(self) -> tuple:
+        """返回插件已禁用的响应。"""
+        return True, "插件已禁用", 2
+
     # ─── Commands ───────────────────────────────────────────
 
     @Command("社区帮助", description="查看所有社区互动命令", pattern=r"^/社区帮助\s*$")
     async def handle_help(self, stream_id: str = "", **kwargs) -> tuple:
         """显示帮助信息。"""
+        if not self._check_enabled():
+            return self._disabled_response()
+        if not self._check_enabled():
+            return True, "插件已禁用", 2
+
         help_text = (
             "社区互动增强 — 命令帮助\n"
             "━━━ 互动娱乐 ━━━\n"
@@ -317,6 +332,10 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("投票", description="发起投票", pattern=r"^/投票\s+(?P<options>.+)$")
     async def handle_create_vote(self, stream_id: str = "", user_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:
         """发起投票。"""
+        if not self._check_enabled():
+            return self._disabled_response()
+        if not self._check_enabled():
+            return self._disabled_response()
         raw = (matched_groups or {}).get("options", "")
         options = [o.strip() for o in raw.split() if o.strip()]
         result = await self._entertainment.create_vote(stream_id, user_id, options)
@@ -326,6 +345,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("投票选择", description="投票选择", pattern=r"^/投票(?P<number>\d+)\s*$")
     async def handle_cast_vote(self, stream_id: str = "", user_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:
         """投票。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         number = int((matched_groups or {}).get("number", "1")) - 1
         result = await self._entertainment.cast_vote(stream_id, user_id, number)
         await self.ctx.send.text(result, stream_id)
@@ -334,6 +355,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("投票结果", description="查看投票结果", pattern=r"^/投票结果\s*$")
     async def handle_vote_result(self, stream_id: str = "", **kwargs) -> tuple:
         """查看投票结果。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         result = await self._entertainment.get_vote_result(stream_id)
         await self.ctx.send.text(result, stream_id)
         return True, result, 2
@@ -341,6 +364,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("结束投票", description="结束投票", pattern=r"^/结束投票\s*$")
     async def handle_end_vote(self, stream_id: str = "", **kwargs) -> tuple:
         """结束投票。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         result = await self._entertainment.end_vote(stream_id)
         await self.ctx.send.text(result, stream_id)
         return True, result, 2
@@ -348,6 +373,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("抽奖", description="抽奖", pattern=r"^/抽奖\s*(?P<count>\d*)\s*$")
     async def handle_lottery(self, stream_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:
         """抽奖。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         count_str = (matched_groups or {}).get("count", "1")
         count = int(count_str) if count_str else 1
         result = await self._entertainment.lottery(stream_id, count)
@@ -357,6 +384,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("打卡", description="每日签到", pattern=r"^/打卡\s*$")
     async def handle_check_in(self, stream_id: str = "", user_id: str = "", **kwargs) -> tuple:
         """每日签到。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         self._logger.info("用户 %s 执行打卡", user_id)
         result = await self._entertainment.check_in(stream_id, user_id)
         await self.ctx.send.text(result, stream_id)
@@ -365,6 +394,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("连续打卡", description="查看连续打卡天数", pattern=r"^/连续打卡\s*$")
     async def handle_streak(self, stream_id: str = "", user_id: str = "", **kwargs) -> tuple:
         """查看连续打卡天数。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         self._logger.info("用户 %s 查询连续打卡", user_id)
         streak = await self._entertainment._calc_streak(stream_id, user_id)
         msg = f"连续打卡 {streak} 天"
@@ -374,6 +405,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("早安", description="早安问候", pattern=r"^/早安\s*$")
     async def handle_gmorning(self, stream_id: str = "", user_id: str = "", **kwargs) -> tuple:
         """早安问候。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         self._logger.info("用户 %s 发送早安", user_id)
         result = await self._entertainment.greeting(stream_id, user_id, "早安")
         await self.ctx.send.text(result, stream_id)
@@ -382,6 +415,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("晚安", description="晚安问候", pattern=r"^/晚安\s*$")
     async def handle_gnight(self, stream_id: str = "", user_id: str = "", **kwargs) -> tuple:
         """晚安问候。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         self._logger.info("用户 %s 发送晚安", user_id)
         result = await self._entertainment.greeting(stream_id, user_id, "晚安")
         await self.ctx.send.text(result, stream_id)
@@ -390,6 +425,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("节日", description="查看今日节日彩蛋", pattern=r"^/节日\s*$")
     async def handle_holiday(self, stream_id: str = "", **kwargs) -> tuple:
         """查看今日节日彩蛋。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         greeting = self._entertainment.get_holiday_greeting()
         if greeting:
             await self.ctx.send.text(greeting, stream_id)
@@ -401,6 +438,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("接龙", description="发起接龙", pattern=r"^/接龙\s+(?P<content>.+)$")
     async def handle_start_chain(self, stream_id: str = "", user_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:
         """发起接龙。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         content = (matched_groups or {}).get("content", "")
         result = await self._entertainment.start_chain(stream_id, user_id, content)
         await self.ctx.send.text(result, stream_id)
@@ -409,6 +448,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("加入接龙", description="参与接龙", pattern=r"^/加入接龙\s+(?P<text>.+)$")
     async def handle_join_chain(self, stream_id: str = "", user_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:
         """参与接龙。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         text = (matched_groups or {}).get("text", "")
         result = await self._entertainment.join_chain(stream_id, user_id, text)
         await self.ctx.send.text(result, stream_id)
@@ -419,6 +460,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("活跃榜", description="查看活跃排行", pattern=r"^/活跃榜\s*(?P<days>\d*)\s*$")
     async def handle_active_rank(self, stream_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:
         """查看活跃排行。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         days_str = (matched_groups or {}).get("days", "7")
         days = int(days_str) if days_str else 7
         result = await self._atmosphere.get_active_rank(stream_id, days)
@@ -428,6 +471,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("群温度", description="查看群活跃温度", pattern=r"^/群温度\s*$")
     async def handle_temperature(self, stream_id: str = "", **kwargs) -> tuple:
         """查看群活跃温度。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         result = await self._atmosphere.get_temperature(stream_id)
         await self.ctx.send.text(result, stream_id)
         return True, result, 2
@@ -435,6 +480,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("潜水", description="查看潜水用户", pattern=r"^/潜水\s*(?P<days>\d*)\s*$")
     async def handle_lurkers(self, stream_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:
         """查看潜水用户。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         days_str = (matched_groups or {}).get("days", "7")
         days = int(days_str) if days_str else 7
         result = await self._atmosphere.get_lurkers(stream_id, days)
@@ -444,6 +491,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("周年", description="查看今日周年纪念", pattern=r"^/周年\s*$")
     async def handle_anniversary(self, stream_id: str = "", **kwargs) -> tuple:
         """查看今日周年纪念。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         results = await self._atmosphere.check_anniversaries(stream_id)
         if results:
             msg = "今日周年纪念：\n" + "\n".join(f"  - {r}" for r in results)
@@ -457,6 +506,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("画像", description="查看用户画像", pattern=r"^/画像\s*(?P<user>.*)\s*$")
     async def handle_profile(self, stream_id: str = "", user_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:
         """查看用户画像。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         target_user = (matched_groups or {}).get("user", "").strip() or user_id
         self._logger.info("查询用户画像: %s", target_user)
         result = await self._memory.get_user_profile(stream_id, target_user)
@@ -466,6 +517,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("回顾", description="共同记忆回顾", pattern=r"^/回顾\s*$")
     async def handle_memory_recall(self, stream_id: str = "", **kwargs) -> tuple:
         """共同记忆回顾。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         self._logger.info("执行记忆回顾")
         result = await self._memory.memory_recall(stream_id)
         await self.ctx.send.text(result, stream_id)
@@ -476,6 +529,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("切换人格", description="切换人格", pattern=r"^/切换人格\s+(?P<name>.+)$")
     async def handle_switch_persona(self, stream_id: str = "", matched_groups: dict | None = None, **kwargs) -> tuple:
         """切换人格。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         name = (matched_groups or {}).get("name", "")
         self._logger.info("切换人格: %s", name)
         result = await self._persona.switch_persona(stream_id, name)
@@ -485,6 +540,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("当前人格", description="查看当前人格", pattern=r"^/当前人格\s*$")
     async def handle_current_persona(self, stream_id: str = "", **kwargs) -> tuple:
         """查看当前人格。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         current = self._persona.get_current_persona(stream_id)
         msg = f"当前人格：{current}"
         await self.ctx.send.text(msg, stream_id)
@@ -493,6 +550,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("心情", description="检测当前心情", pattern=r"^/心情\s*$")
     async def handle_mood(self, stream_id: str = "", **kwargs) -> tuple:
         """检测当前心情。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         current = self._persona.get_mood(stream_id)
         msg = f"当前心情：{current}"
         await self.ctx.send.text(msg, stream_id)
@@ -501,6 +560,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("情绪", description="查看群聊情绪仪表盘", pattern=r"^/情绪\s*$")
     async def handle_sentiment(self, stream_id: str = "", **kwargs) -> tuple:
         """查看群聊情绪仪表盘。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         result = await self._atmosphere.get_sentiment_dashboard(stream_id)
         await self.ctx.send.text(result, stream_id)
         return True, result, 2
@@ -508,6 +569,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("翻译", description="翻译最近一条消息", pattern=r"^/翻译\s*$")
     async def handle_translate(self, stream_id: str = "", **kwargs) -> tuple:
         """翻译最近一条消息。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         recent = await self.ctx.message.get_recent(stream_id, limit=1)
         if not recent:
             msg = "没有可翻译的消息"
@@ -534,6 +597,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("导出数据", description="导出用户数据", pattern=r"^/导出数据\s*$")
     async def handle_export(self, stream_id: str = "", user_id: str = "", **kwargs) -> tuple:
         """导出用户数据。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         self._logger.info("用户 %s 导出数据", user_id)
         result = await self._privacy.export_data(user_id)
         await self.ctx.send.text(result, stream_id)
@@ -542,6 +607,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     @Command("注销", description="注销并清理数据", pattern=r"^/注销\s*$")
     async def handle_delete(self, stream_id: str = "", user_id: str = "", **kwargs) -> tuple:
         """注销并清理数据。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         self._logger.info("用户 %s 注销并清理数据", user_id)
         result = await self._privacy.delete_user_data(user_id)
         await self.ctx.send.text(result, stream_id)
@@ -563,6 +630,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     )
     async def tool_group_temperature(self, stream_id: str = "", **kwargs) -> dict:
         """LLM 工具：查询群温度。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         self._logger.debug("LLM 调用: 查询群温度")
         result = await self._atmosphere.get_temperature(stream_id)
         return {"temperature": result}
@@ -587,6 +656,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     )
     async def tool_user_profile(self, stream_id: str = "", user_id: str = "", **kwargs) -> dict:
         """LLM 工具：查询用户画像。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         self._logger.debug("LLM 调用: 查询用户画像 %s", user_id)
         result = await self._memory.get_user_profile(stream_id, user_id)
         return {"profile": result}
@@ -605,6 +676,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     )
     async def tool_recall_memory(self, stream_id: str = "", **kwargs) -> dict:
         """LLM 工具：共同记忆回顾。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         self._logger.debug("LLM 调用: 记忆回顾")
         result = await self._memory.memory_recall(stream_id)
         return {"recall": result}
@@ -623,6 +696,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     )
     async def tool_sanitize(self, text: str = "", **kwargs) -> dict:
         """LLM 工具：文本脱敏。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         self._logger.debug("LLM 调用: 文本脱敏")
         result = self._privacy.sanitize(text)
         return {"sanitized": result}
@@ -641,6 +716,8 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     )
     async def tool_check_silence(self, stream_id: str = "", **kwargs) -> dict:
         """LLM 工具：检查冷场状态。"""
+        if not self._check_enabled():
+            return self._disabled_response()
         self._logger.debug("LLM 调用: 检查冷场状态")
         result = await self._rhythm.check_silence(stream_id)
         return {"silence": result or "未冷场"}

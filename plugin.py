@@ -113,6 +113,10 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     )
     async def handle_message_filter(self, message: Any, **kwargs) -> Any:
         """统一消息过滤：风控检查 → 节奏检查。"""
+        # 检查插件是否启用
+        if not self._config.general.enabled:
+            return message
+
         # 风控检查
         result = await self._security.check_message(message)
         if result is None:
@@ -136,6 +140,10 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     )
     async def handle_new_user(self, message: Any, **kwargs) -> None:
         """检查新用户并发送欢迎消息。"""
+        # 检查插件是否启用
+        if not self._config.general.enabled:
+            return
+
         welcome = await self._atmosphere.check_new_user(message)
         if welcome:
             stream_id = message.get("stream_id", message.get("session_id", ""))
@@ -154,6 +162,10 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     )
     async def handle_recall(self, message: Any, **kwargs) -> None:
         """检测消息撤回事件。"""
+        # 检查插件是否启用
+        if not self._config.general.enabled:
+            return
+
         # 撤回消息的特征：message 中包含 recall 相关标记
         is_recall = message.get("is_notify", False) and "撤回" in str(message.get("processed_plain_text", ""))
         if is_recall:
@@ -174,6 +186,10 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     )
     async def hook_input_parse(self, **kwargs) -> dict:
         """在消息处理前解析输入结构（@ 检测、回复上下文）。"""
+        # 检查插件是否启用
+        if not self._config.general.enabled:
+            return {"action": "continue", "modified_kwargs": kwargs}
+
         message = kwargs.get("message", {})
         if message and self._input_parse:
             parsed = await self._input_parse.parse(message)
@@ -202,6 +218,10 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     )
     async def hook_output_format(self, **kwargs) -> dict:
         """在发送前美化消息格式（仅本地操作，不调用外部 API）。"""
+        # 检查插件是否启用
+        if not self._config.general.enabled:
+            return {"action": "continue", "modified_kwargs": kwargs}
+
         text = kwargs.get("text", "")
         stream_id = kwargs.get("stream_id", "")
         if text and self._output_format:
@@ -226,6 +246,10 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     )
     async def hook_persona_inject(self, messages: Any = None, **kwargs) -> dict | None:
         """在 LLM 请求前注入人格指令。"""
+        # 检查插件是否启用
+        if not self._config.general.enabled:
+            return None
+
         if not self._persona or not self._config.persona.enabled:
             return None
 

@@ -200,14 +200,6 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
             formatted = await self._output_format.format_output(text, stream_id)
             if formatted != text:
                 kwargs["text"] = formatted
-            # 超长消息分段（超过阈值 2 倍时拆分）
-            max_len = self._output_format._config.max_length
-            if len(formatted) > max_len * 2:
-                parts = await self._output_format.split_long_message(formatted, stream_id)
-                if len(parts) > 1:
-                    kwargs["text"] = parts[0]
-                    # 剩余部分追加到待发队列（通过后续发送）
-                    kwargs["split_remaining"] = parts[1:]
         return {"action": "continue", "modified_kwargs": kwargs}
 
     # ─── Commands ───────────────────────────────────────────

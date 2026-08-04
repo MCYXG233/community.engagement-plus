@@ -145,6 +145,9 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
         text = kwargs.get("text", "")
         stream_id = kwargs.get("stream_id", "")
         if text and self._output_format:
+            # 质量优化：链接去重
+            text = await self._quality.check_outgoing(text, stream_id) or text
+            # 输出美化：折叠 + 表情
             formatted = await self._output_format.format_output(text, stream_id)
             if formatted != text:
                 kwargs["text"] = formatted

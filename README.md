@@ -182,6 +182,50 @@
 
 ## 更新日志
 
+### 版本 1.1.0
+
+**功能补全**
+
+- 冷场提醒：跟踪每个群的最后消息时间，超过阈值时触发提醒
+- 周年纪念：检测用户首次发言日期，匹配时生成周年祝福
+- 节日彩蛋：7 个节日（新年/情人节/劳动节/儿童节/国庆/圣诞/跨年）
+- 情绪仪表盘：调用外部 API 分析群聊情绪
+- 翻译备注：调用外部 API 自动附加翻译
+- 图片鉴黄：调用外部 API 审核违规图片
+- 关键词高亮：配置的关键词添加 【】 标记
+- 多消息合并：缓冲窗口期内同一用户的连续消息
+- 跨会话记忆同步：LLM 提取关键信息并同步到其他会话
+- 心情驱动人格：LLM 情感分析自动切换人格
+- 画像加密：Base64 编码保护用户画像数据
+- 撤回检测：检测消息撤回并通知
+- /节日、/周年、/情绪、/心情 命令
+
+**代码修复**
+
+- 导入修复：`HookMode`/`HookOrder`/`ToolParameterInfo`/`ToolParamType` 改从 `maibot_sdk.types` 导入
+- 隐私修复：`delete_user_data` 限定只删 `community_engagement_` 前缀的数据
+- 隐私修复：`/注销` 同时清理 PluginData 表和 entertainment.json
+- 配置修复：`scope` 比较使用 `CONFIG_RELOAD_SCOPE_SELF` 常量
+- Tool 修复：所有 `@Tool` 使用 `brief_description`（文档推荐）
+- 持久化修复：`load_persistent_data` 恢复投票和接龙状态到内存
+- 性能修复：`_calc_streak` 用 `count` 替代 `get`，遇中断即停止
+- 多 Bot 协调：非 @ 非命令消息跳过节奏控制
+- 管道接入：`quality.check_outgoing`、`input_parse.parse`、`output_format.split_long_message` 全部接入 HookHandler
+- 移除空壳：`check_silence` 空实现、`hook_input_parse` 空钩子
+
+**配置扩展**
+
+- 新增外部 API 配置：图片审核、情绪分析、翻译（用户自填 URL + Key）
+- 新增功能开关：心情驱动、跨会话同步、画像加密、关键词高亮、多消息合并
+- 配置版本升级至 1.1.0
+
+**文档与合规**
+
+- README 新增「隐私与数据说明」章节，列出外部 API 数据流向
+- 移除未使用的 `_locales` 目录和 manifest `i18n` 块
+- manifest capabilities 从 30 项精简到 11 项（仅实际使用）
+- 所有 Command 处理函数补全返回三元组 `(success, response, weight)`
+
 ### 版本 1.0.0
 
 - 完成 10 大功能模块开发：节奏控制、质量优化、互动娱乐、氛围监测、记忆增强、风控过滤、输入解析、输出美化、人格切换、隐私保护

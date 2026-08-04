@@ -222,7 +222,7 @@
 **文档与合规**
 
 - README 新增「隐私与数据说明」章节，列出外部 API 数据流向
-- 移除未使用的 `_locales` 目录和 manifest `i18n` 块
+- manifest `i18n` 保留必填字段 `default_locale`（移除未使用的 `locales_path` 和 `supported_locales`）
 - manifest capabilities 从 30 项精简到 11 项（仅实际使用）
 - 所有 Command 处理函数补全返回三元组 `(success, response, weight)`
 

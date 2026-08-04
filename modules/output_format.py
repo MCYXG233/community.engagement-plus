@@ -29,6 +29,12 @@ class OutputFormatModule:
         # 表情插入
         text = await self._insert_emoji(text)
 
+        # 翻译备注
+        if self._config.translate_api_url and len(text) > 10:
+            translation = await self._translate(text)
+            if translation and translation != text:
+                text = f"{text}\n\n🌐 {translation}"
+
         return text
 
     def _fold_text(self, text: str) -> str:
@@ -100,6 +106,32 @@ class OutputFormatModule:
             remaining = remaining[cut_point:].lstrip()
 
         return parts
+
+    async def _translate(self, text: str) -> str | None:
+        """调用外部翻译 API。返回翻译结果或 None。"""
+        api_url = self._config.translate_api_url
+        if not api_url:
+            return None
+
+        try:
+            import aiohttp
+            headers = {"Content-Type": "application/json"}
+            if self._config.translate_api_key:
+                headers["Authorization"] = f"Bearer {self._config.translate_api_key}"
+
+            payload = {
+                "text": text,
+                "target_lang": self._config.translate_target_lang,
+            }
+            async with aiohttp.ClientSession() as session:
+                async with session.post(api_url, json=payload, headers=headers, timeout=10) as resp:
+                    if resp.status == 200:
+                        result = await resp.json()
+                        return result.get("translation", result.get("text", ""))
+        except Exception as e:
+            self._ctx.logger.warning(f"翻译 API 调用失败: {e}")
+
+        return None
 
     async def cleanup(self) -> None:
         """清理资源。"""

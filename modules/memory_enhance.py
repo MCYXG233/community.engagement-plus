@@ -97,6 +97,50 @@ class MemoryEnhanceModule:
         except Exception as e:
             self._ctx.logger.warning(f"追加上下文失败: {e}")
 
+    async def sync_cross_session(self, user_id: str, source_stream: str, target_stream: str) -> str:
+        """跨会话记忆同步：将用户在一个会话中的关键信息同步到另一个会话。
+
+        使用 ctx.db 存储同步标记，通过 ctx.maisaka.context.append 追加上下文。
+        """
+        if not self._config.cross_session_sync:
+            return "跨会话同步未启用"
+
+        try:
+            # 从源会话获取最近消息
+            recent = await self._ctx.message.get_recent(source_stream, limit=10)
+            user_msgs = [
+                m for m in recent
+                if self._extract_user_id(m) == user_id
+            ]
+
+            if not user_msgs:
+                return "源会话中没有该用户的消息"
+
+            # 提取关键信息
+            texts = [m.get("processed_plain_text", "") for m in user_msgs if m.get("processed_plain_text")]
+            if not texts:
+                return "没有可同步的文本内容"
+
+            # 使用 LLM 提取关键信息
+            combined = "\n".join(texts[:5])
+            prompt = f"请用一句话总结以下用户发言的核心要点：\n{combined}"
+            result = await self._ctx.llm.generate(prompt)
+            summary = result.get("response", "")
+
+            if summary:
+                # 追加到目标会话上下文
+                sync_text = f"[跨会话同步] 用户 {user_id} 之前说过：{summary}"
+                await self._ctx.maisaka.context.append(
+                    target_stream,
+                    [{"type": "text", "data": sync_text}],
+                )
+                return f"已同步用户 {user_id} 的上下文到目标会话"
+
+            return "无法提取关键信息"
+        except Exception as e:
+            self._ctx.logger.warning(f"跨会话同步失败: {e}")
+            return f"同步失败: {e}"
+
     def _extract_user_id(self, message: dict) -> str:
         """从消息中提取用户 ID。"""
         msg_info = message.get("message_info", {})

@@ -9,7 +9,7 @@ class PluginSectionConfig(PluginConfigBase):
     """插件基础配置。"""
 
     __ui_label__: ClassVar[str] = "基础设置"
-    config_version: str = Field(default="1.0.0", description="配置版本号")
+    config_version: str = Field(default="1.1.0", description="配置版本号")
     enabled: bool = Field(default=True, description="是否启用社区互动增强插件")
 
 
@@ -30,6 +30,7 @@ class QualityConfig(PluginConfigBase):
     __ui_label__: ClassVar[str] = "质量优化"
     enabled: bool = Field(default=True, description="是否启用质量优化")
     dedup_window: int = Field(default=60, description="去重窗口（秒）")
+    highlight_keywords: List[str] = Field(default_factory=list, description="需要高亮的关键词列表")
 
 
 class EntertainmentConfig(PluginConfigBase):
@@ -45,6 +46,8 @@ class AtmosphereConfig(PluginConfigBase):
     __ui_label__: ClassVar[str] = "氛围监测"
     enabled: bool = Field(default=True, description="是否启用氛围监测")
     welcome_enabled: bool = Field(default=True, description="是否启用新人欢迎")
+    sentiment_api_url: str = Field(default="", description="情绪分析 API 地址（留空禁用）")
+    sentiment_api_key: str = Field(default="", description="情绪分析 API Key")
 
 
 class MemoryConfig(PluginConfigBase):
@@ -56,6 +59,7 @@ class MemoryConfig(PluginConfigBase):
         default_factory=lambda: ["活跃时段", "常用表情", "发言主题"],
         description="用户画像统计字段",
     )
+    cross_session_sync: bool = Field(default=True, description="是否启用跨会话记忆同步")
 
 
 class SecurityConfig(PluginConfigBase):
@@ -65,6 +69,8 @@ class SecurityConfig(PluginConfigBase):
     enabled: bool = Field(default=True, description="是否启用风控过滤")
     blocked_words: List[str] = Field(default_factory=list, description="屏蔽词列表")
     fishing_url_patterns: List[str] = Field(default_factory=list, description="钓鱼链接正则模式")
+    image_check_api_url: str = Field(default="", description="图片审核 API 地址（留空禁用）")
+    image_check_api_key: str = Field(default="", description="图片审核 API Key")
 
 
 class InputParseConfig(PluginConfigBase):
@@ -72,6 +78,7 @@ class InputParseConfig(PluginConfigBase):
 
     __ui_label__: ClassVar[str] = "输入解析"
     enabled: bool = Field(default=True, description="是否启用输入解析")
+    merge_window: int = Field(default=5, description="多消息合并窗口（秒）")
 
 
 class OutputFormatConfig(PluginConfigBase):
@@ -80,6 +87,9 @@ class OutputFormatConfig(PluginConfigBase):
     __ui_label__: ClassVar[str] = "输出美化"
     enabled: bool = Field(default=True, description="是否启用输出美化")
     max_length: int = Field(default=500, description="长文折叠阈值（字符）")
+    translate_api_url: str = Field(default="", description="翻译 API 地址（留空禁用）")
+    translate_api_key: str = Field(default="", description="翻译 API Key")
+    translate_target_lang: str = Field(default="en", description="翻译目标语言")
 
 
 class PersonaConfig(PluginConfigBase):
@@ -88,6 +98,7 @@ class PersonaConfig(PluginConfigBase):
     __ui_label__: ClassVar[str] = "人格切换"
     enabled: bool = Field(default=True, description="是否启用人格切换")
     default_persona: str = Field(default="元气", description="默认人格名称")
+    mood_driven: bool = Field(default=True, description="是否启用心情驱动人格")
 
 
 class PrivacyConfig(PluginConfigBase):
@@ -96,6 +107,7 @@ class PrivacyConfig(PluginConfigBase):
     __ui_label__: ClassVar[str] = "隐私保护"
     enabled: bool = Field(default=True, description="是否启用隐私保护")
     sensitive_patterns: List[str] = Field(default_factory=list, description="敏感词脱敏正则模式")
+    encrypt_profiles: bool = Field(default=False, description="是否加密用户画像数据")
 
 
 class CommunityEngagementConfig(PluginConfigBase):

@@ -132,6 +132,27 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
             if stream_id:
                 await self.ctx.send.text(welcome, stream_id)
 
+    # ─── EventHandler: 撤回检测 ─────────────────────────────
+
+    @EventHandler(
+        "撤回检测器",
+        description="检测消息撤回并记录日志",
+        event_type="on_message",
+        intercept_message=False,
+        weight=0,
+    )
+    async def handle_recall(self, message: Any, **kwargs) -> None:
+        """检测消息撤回事件。"""
+        # 撤回消息的特征：message 中包含 recall 相关标记
+        is_recall = message.get("is_notify", False) and "撤回" in str(message.get("processed_plain_text", ""))
+        if is_recall:
+            user_info = message.get("message_info", {}).get("user_info", {})
+            nickname = user_info.get("user_nickname", "未知用户")
+            stream_id = message.get("session_id", "")
+            self.ctx.logger.info(f"[撤回检测] {nickname} 撤回了一条消息")
+            if stream_id:
+                await self.ctx.send.text(f"📋 {nickname} 撤回了一条消息", stream_id)
+
     # ─── HookHandler: 输出美化钩子 ─────────────────────────
 
     @HookHandler(
@@ -178,12 +199,14 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
             "/群温度 — 查看群活跃温度\n"
             "/潜水 [天数] — 查看潜水用户\n"
             "/周年 — 今日周年纪念\n"
+            "/情绪 — 情绪仪表盘\n"
             "━━━ 记忆增强 ━━━\n"
             "/画像 [用户] — 查看用户画像\n"
             "/回顾 — 共同记忆回顾\n"
             "━━━ 人格切换 ━━━\n"
             "/切换人格 <名称> — 切换人格\n"
             "/当前人格 — 查看当前人格\n"
+            "/心情 — 检测当前心情\n"
             "━━━ 隐私保护 ━━━\n"
             "/导出数据 — 导出用户数据\n"
             "/注销 — 注销并清理数据\n"
@@ -361,6 +384,21 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
         msg = f"当前人格：{current}"
         await self.ctx.send.text(msg, stream_id)
         return True, msg, 2
+
+    @Command("心情", description="检测当前心情", pattern=r"^/心情\s*$")
+    async def handle_mood(self, stream_id: str = "", **kwargs) -> tuple:
+        """检测当前心情。"""
+        current = self._persona.get_mood(stream_id)
+        msg = f"当前心情：{current}"
+        await self.ctx.send.text(msg, stream_id)
+        return True, msg, 2
+
+    @Command("情绪", description="查看群聊情绪仪表盘", pattern=r"^/情绪\s*$")
+    async def handle_sentiment(self, stream_id: str = "", **kwargs) -> tuple:
+        """查看群聊情绪仪表盘。"""
+        result = await self._atmosphere.get_sentiment_dashboard(stream_id)
+        await self.ctx.send.text(result, stream_id)
+        return True, result, 2
 
     # ─── 隐私保护命令 ──────────────────────────────────────
 

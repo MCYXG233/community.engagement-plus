@@ -34,6 +34,17 @@ class QualityModule:
         if text:
             text = self._deduplicate_urls(text, stream_id, now)
 
+        # 关键词高亮
+        if text and self._config.highlight_keywords:
+            text = self._highlight_keywords(text)
+
+        return text
+
+    def _highlight_keywords(self, text: str) -> str:
+        """对配置中的关键词添加 【】 标记。"""
+        for kw in self._config.highlight_keywords:
+            if kw in text:
+                text = text.replace(kw, f"【{kw}】")
         return text
 
     def _deduplicate_urls(self, text: str, stream_id: str, now: float) -> str:

@@ -208,6 +208,56 @@ class AtmosphereModule:
 
         return results
 
+    async def get_sentiment_dashboard(self, stream_id: str) -> str:
+        """获取群聊情绪仪表盘。调用外部情绪分析 API。"""
+        api_url = self._config.sentiment_api_url
+        if not api_url:
+            return "情绪分析未配置（请设置 sentiment_api_url）"
+
+        recent = await self._ctx.message.get_recent(stream_id, limit=50)
+        if not recent:
+            return "暂无消息数据"
+
+        # 提取文本
+        texts = []
+        for msg in recent:
+            text = msg.get("processed_plain_text", "")
+            if text:
+                texts.append(text)
+
+        if not texts:
+            return "暂无可分析的文本"
+
+        combined = "\n".join(texts[-20:])  # 取最近20条
+
+        try:
+            import aiohttp
+            headers = {"Content-Type": "application/json"}
+            if self._config.sentiment_api_key:
+                headers["Authorization"] = f"Bearer {self._config.sentiment_api_key}"
+
+            payload = {"text": combined}
+            async with aiohttp.ClientSession() as session:
+                async with session.post(api_url, json=payload, headers=headers, timeout=10) as resp:
+                    if resp.status == 200:
+                        result = await resp.json()
+                        # 通用情绪 API 响应：{"sentiment": "positive", "score": 0.8, "emotions": {...}}
+                        sentiment = result.get("sentiment", "未知")
+                        score = result.get("score", 0)
+                        emotions = result.get("emotions", {})
+
+                        lines = [f"情绪分析结果："]
+                        lines.append(f"  整体情绪：{sentiment}（置信度 {score:.0%}）")
+                        if emotions:
+                            top = sorted(emotions.items(), key=lambda x: x[1], reverse=True)[:3]
+                            for emo, val in top:
+                                lines.append(f"  {emo}：{val:.0%}")
+                        return "\n".join(lines)
+        except Exception as e:
+            self._ctx.logger.warning(f"情绪分析 API 调用失败: {e}")
+
+        return "情绪分析失败，请稍后再试"
+
     def _get_timestamp(self, message: dict) -> float:
         """从消息中提取时间戳。"""
         ts = message.get("timestamp", "0")

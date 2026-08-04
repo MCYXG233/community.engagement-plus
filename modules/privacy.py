@@ -60,6 +60,40 @@ class PrivacyModule:
 
         return text
 
+    def encrypt_profile(self, data: dict) -> dict:
+        """对用户画像数据进行简单加密（Base64 编码）。
+
+        注意：这是轻量级混淆，非安全加密。如需真正加密请使用专业库。
+        """
+        if not self._config.encrypt_profiles:
+            return data
+
+        import base64
+        encrypted = {}
+        for key, value in data.items():
+            if isinstance(value, str):
+                encrypted[key] = base64.b64encode(value.encode("utf-8")).decode("ascii")
+            else:
+                encrypted[key] = value
+        return encrypted
+
+    def decrypt_profile(self, data: dict) -> dict:
+        """解密用户画像数据。"""
+        if not self._config.encrypt_profiles:
+            return data
+
+        import base64
+        decrypted = {}
+        for key, value in data.items():
+            if isinstance(value, str):
+                try:
+                    decrypted[key] = base64.b64decode(value.encode("ascii")).decode("utf-8")
+                except Exception:
+                    decrypted[key] = value
+            else:
+                decrypted[key] = value
+        return decrypted
+
     async def export_data(self, user_id: str) -> str:
         """导出用户数据为 JSON。"""
         data: Dict[str, Any] = {

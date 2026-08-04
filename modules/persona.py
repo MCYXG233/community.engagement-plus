@@ -31,13 +31,25 @@ PERSONA_TEMPLATES: Dict[str, str] = {
 
 
 class PersonaModule:
-    """人格切换模块：管理群聊人格状态和风格注入。"""
+    """人格切换模块：管理群聊人格状态、风格注入和心情驱动。"""
+
+    # 心情到人格的映射
+    MOOD_PERSONA_MAP = {
+        "positive": "元气",
+        "happy": "元气",
+        "negative": "温柔",
+        "sad": "温柔",
+        "angry": "毒舌",
+        "neutral": None,  # 不切换
+    }
 
     def __init__(self, ctx: PluginContext, config: PersonaConfig) -> None:
         self._ctx = ctx
         self._config = config
         # stream_id -> 当前人格名称
         self._personas: Dict[str, str] = {}
+        # stream_id -> 当前心情
+        self._moods: Dict[str, str] = {}
 
     async def switch_persona(self, stream_id: str, persona_name: str) -> str:
         """切换当前聊天流的人格。"""
@@ -86,6 +98,36 @@ class PersonaModule:
             lines.append(f"  - {name}: {desc[:30]}...")
         return "\n".join(lines)
 
+    async def detect_mood(self, stream_id: str, text: str) -> str:
+        """检测消息心情，如果启用心情驱动则自动切换人格。
+
+        使用 LLM 进行情感分析。
+        """
+        if not self._config.mood_driven:
+            return "心情驱动未启用"
+
+        try:
+            prompt = f"分析以下文本的情绪（只返回一个词：positive/negative/neutral/angry/happy/sad）：\n{text}"
+            result = await self._ctx.llm.generate(prompt)
+            mood = result.get("response", "").strip().lower()
+
+            if mood in self.MOOD_PERSONA_MAP:
+                self._moods[stream_id] = mood
+                target_persona = self.MOOD_PERSONA_MAP[mood]
+                if target_persona and target_persona != self._personas.get(stream_id):
+                    self._personas[stream_id] = target_persona
+                    return f"心情变化：{mood} → 切换为「{target_persona}」人格"
+
+            return f"当前心情：{mood}"
+        except Exception as e:
+            self._ctx.logger.warning(f"心情检测失败: {e}")
+            return "心情检测失败"
+
+    def get_mood(self, stream_id: str) -> str:
+        """获取当前心情。"""
+        return self._moods.get(stream_id, "未知")
+
     async def cleanup(self) -> None:
         """清理资源。"""
         self._personas.clear()
+        self._moods.clear()

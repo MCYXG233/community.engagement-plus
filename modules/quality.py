@@ -81,57 +81,6 @@ class QualityModule:
 
         return text if text else None
 
-    def merge_repeated(self, messages: list[dict], stream_id: str) -> list[dict]:
-        """合并连续相同内容的消息。返回合并后的消息列表。"""
-        if not self._config.enabled or not messages:
-            return messages
-
-        merged: list[dict] = []
-        repeat_count = 0
-        last_text = ""
-        last_user = ""
-
-        for msg in messages:
-            text = msg.get("processed_plain_text", "") or ""
-            user_id = ""
-            msg_info = msg.get("message_info", {})
-            user_info = msg_info.get("user_info", {})
-            user_id = user_info.get("user_id", "")
-
-            if text == last_text and text:
-                repeat_count += 1
-            else:
-                if repeat_count >= 2 and last_text:
-                    merged.append({
-                        "type": "text",
-                        "data": f"（{repeat_count} 人发送了相同内容）",
-                    })
-                elif repeat_count == 1 and last_text:
-                    merged.append({"type": "text", "data": last_text})
-                elif repeat_count == 0 and last_text:
-                    merged.append(msg)
-
-                if text:
-                    merged.append(msg)
-                    last_text = text
-                    last_user = user_id
-                    repeat_count = 1
-                else:
-                    merged.append(msg)
-                    last_text = ""
-                    repeat_count = 0
-
-        # 处理最后一组
-        if repeat_count >= 2 and last_text:
-            merged.append({
-                "type": "text",
-                "data": f"（{repeat_count} 人发送了相同内容）",
-            })
-        elif repeat_count == 1 and last_text:
-            merged.append({"type": "text", "data": last_text})
-
-        return merged
-
     async def cleanup(self) -> None:
         """清理资源。"""
         self._recent_messages.clear()

@@ -80,34 +80,6 @@ class OutputFormatModule:
 
         return text
 
-    async def split_long_message(self, text: str, stream_id: str) -> list[str]:
-        """将长消息拆分为多条。"""
-        if len(text) <= self._config.max_length:
-            return [text]
-
-        parts: list[str] = []
-        remaining = text
-
-        while remaining:
-            if len(remaining) <= self._config.max_length:
-                parts.append(remaining)
-                break
-
-            # 在自然断点处拆分
-            cut_point = self._config.max_length
-            last_newline = remaining.rfind("\n", 0, cut_point)
-            last_period = remaining.rfind("。", 0, cut_point)
-            last_comma = remaining.rfind("，", 0, cut_point)
-
-            best = max(last_newline, last_period, last_comma)
-            if best > cut_point // 2:
-                cut_point = best + 1
-
-            parts.append(remaining[:cut_point].rstrip())
-            remaining = remaining[cut_point:].lstrip()
-
-        return parts
-
     async def _translate(self, text: str) -> str | None:
         """调用外部翻译 API。返回翻译结果或 None。"""
         api_url = self._config.translate_api_url

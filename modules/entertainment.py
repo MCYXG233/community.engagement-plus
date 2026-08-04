@@ -61,6 +61,9 @@ class EntertainmentModule:
         # stream_id -> 当前接龙
         self._chains: Dict[str, ChainSession] = {}
         self._data_dir = ctx.paths.data_dir
+        # streak 缓存: (stream_id, user_id, date) -> streak_days
+        self._streak_cache: Dict[tuple, int] = {}
+        self._streak_cache_date: str = ""
 
     # ─── 投票 ────────────────────────────────────────────────
 
@@ -178,8 +181,19 @@ class EntertainmentModule:
         return f"打卡成功！连续打卡 {streak} 天"
 
     async def _calc_streak(self, stream_id: str, user_id: str) -> int:
-        """计算连续打卡天数。"""
+        """计算连续打卡天数（带日级缓存，避免重复查询 DB）。"""
         import datetime
+        today_str = datetime.date.today().strftime("%Y-%m-%d")
+
+        # 缓存按天失效
+        if self._streak_cache_date != today_str:
+            self._streak_cache.clear()
+            self._streak_cache_date = today_str
+
+        cache_key = (stream_id, user_id, today_str)
+        if cache_key in self._streak_cache:
+            return self._streak_cache[cache_key]
+
         streak = 0
         today = datetime.date.today()
 
@@ -196,6 +210,8 @@ class EntertainmentModule:
                 streak += 1
             else:
                 break
+
+        self._streak_cache[cache_key] = streak
         return streak
 
     # ─── 早安晚安 ────────────────────────────────────────────

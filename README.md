@@ -38,63 +38,97 @@
 
 ## 插件配置
 
-配置文件：`CommunityEngagementPlus/config.toml`（首次加载后自动生成）
+在 MaiBot WebUI 插件设置页配置，每个配置项都有标签、输入提示和范围约束。
 
 ### plugin 基础配置
 
-- `enabled`：是否启用插件，默认 `true`。
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| `enabled` | 是否启用插件 | `true` |
 
 ### rhythm 节奏控制
 
-- `enabled`：是否启用，默认 `true`。
-- `throttle_interval`：发言节流间隔（秒），默认 `3`。
-- `flood_threshold`：刷屏阈值（条/10秒），默认 `5`。
-- `repeat_detection_count`：复读检测阈值（人），默认 `2`。
-- `silence_reminder_minutes`：冷场提醒阈值（分钟），默认 `30`。
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| `enabled` | 是否启用节奏控制 | `true` |
+| `throttle_interval` | 发言节流间隔（秒），1~60 | `3` |
+| `flood_threshold` | 刷屏阈值（条/10秒），2~50 | `5` |
+| `repeat_detection_count` | 复读检测阈值（人），2~20 | `2` |
+| `silence_reminder_minutes` | 冷场提醒阈值（分钟），5~1440 | `30` |
 
 ### quality 质量优化
 
-- `enabled`：是否启用，默认 `true`。
-- `dedup_window`：去重窗口（秒），默认 `60`。
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| `enabled` | 是否启用质量优化 | `true` |
+| `dedup_window` | 链接去重窗口（秒），10~600 | `60` |
+| `highlight_keywords` | 高亮关键词，逗号分隔 | 空 |
 
 ### entertainment 互动娱乐
 
-- `enabled`：是否启用，默认 `true`。
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| `enabled` | 是否启用互动娱乐 | `true` |
 
 ### atmosphere 氛围监测
 
-- `enabled`：是否启用，默认 `true`。
-- `welcome_enabled`：新人欢迎开关，默认 `true`。
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| `enabled` | 是否启用氛围监测 | `true` |
+| `welcome_enabled` | 新人欢迎开关 | `true` |
+| `sentiment_api_url` | 情绪分析 API 地址（留空禁用） | 空 |
+| `sentiment_api_key` | 情绪分析 API Key | 空 |
 
 ### memory 记忆增强
 
-- `enabled`：是否启用，默认 `true`。
-- `profile_fields`：画像统计字段列表，默认 `["活跃时段", "常用表情", "发言主题"]`。
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| `enabled` | 是否启用记忆增强 | `true` |
+| `profile_fields` | 画像统计字段，逗号分隔 | `活跃时段,常用表情,发言主题` |
+| `cross_session_sync` | 跨会话记忆同步（开启后 LLM 可跨会话搬运上下文） | `true` |
 
 ### security 风控过滤
 
-- `enabled`：是否启用，默认 `true`。
-- `blocked_words`：屏蔽词列表，默认为空。
-- `fishing_url_patterns`：钓鱼链接正则，默认内置常见短链接。
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| `enabled` | 是否启用风控过滤 | `true` |
+| `blocked_words` | 屏蔽词列表，逗号分隔 | 空 |
+| `fishing_url_patterns` | 钓鱼链接正则，留空使用内置规则 | 空 |
+| `image_check_api_url` | 图片审核 API 地址（留空禁用） | 空 |
+| `image_check_api_key` | 图片审核 API Key | 空 |
 
 ### input_parse 输入解析
 
-- `enabled`：是否启用，默认 `true`。
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| `enabled` | 是否启用输入解析 | `true` |
+| `merge_window` | 多消息合并窗口（秒），1~30 | `5` |
 
 ### output_format 输出美化
 
-- `enabled`：是否启用，默认 `true`。
-- `max_length`：长文折叠阈值（字符），默认 `500`。
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| `enabled` | 是否启用输出美化 | `true` |
+| `max_length` | 长文折叠阈值（字符），100~5000 | `500` |
+| `translate_api_url` | 翻译 API 地址（留空禁用，使用 /翻译 命令按需翻译） | 空 |
+| `translate_api_key` | 翻译 API Key | 空 |
+| `translate_target_lang` | 翻译目标语言 | `en` |
 
 ### persona 人格切换
 
-- `enabled`：是否启用，默认 `true`。
-- `default_persona`：默认人格名称，默认 `元气`。
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| `enabled` | 是否启用人格切换 | `true` |
+| `default_persona` | 默认人格（元气/毒舌/温柔/学术） | `元气` |
+| `mood_driven` | 心情驱动人格（LLM 自动切换） | `true` |
 
 ### privacy 隐私保护
 
-- `enabled`：是否启用，默认 `true`。
-- `sensitive_patterns`：脱敏正则列表，默认内置手机号/邮箱/身份证。
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| `enabled` | 是否启用隐私保护 | `true` |
+| `sensitive_patterns` | 脱敏正则，留空使用内置规则（手机号/邮箱/身份证） | 空 |
+| `encrypt_profiles` | 画像加密（Base64 混淆） | `false` |
 
 ---
 

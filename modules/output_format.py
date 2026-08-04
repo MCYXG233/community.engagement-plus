@@ -1,4 +1,4 @@
-"""模块8: 输出美化 — 分段发送、长文折叠、表情插入"""
+"""模块8: 消息美化 — 长文折叠、表情插入"""
 
 from __future__ import annotations
 
@@ -7,13 +7,11 @@ from typing import TYPE_CHECKING, Any, Optional
 if TYPE_CHECKING:
     from maibot_sdk.context import PluginContext
 
-    from ..config import OutputFormatConfig
-
 
 class OutputFormatModule:
-    """输出美化模块：优化消息输出格式。"""
+    """消息美化模块：优化消息输出格式。"""
 
-    def __init__(self, ctx: PluginContext, config: OutputFormatConfig) -> None:
+    def __init__(self, ctx: PluginContext, config) -> None:
         self._ctx = ctx
         self._config = config
 

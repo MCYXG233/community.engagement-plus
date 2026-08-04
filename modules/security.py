@@ -1,4 +1,4 @@
-"""模块6: 风控过滤 — 关键词屏蔽、图片鉴黄、钓鱼链接拦截、诱导分享检测"""
+"""模块6: 安全过滤 — 屏蔽词、钓鱼链接、图片审核"""
 
 from __future__ import annotations
 
@@ -8,11 +8,9 @@ from typing import TYPE_CHECKING, Any, List
 if TYPE_CHECKING:
     from maibot_sdk.context import PluginContext
 
-    from ..config import SecurityConfig
-
 
 class SecurityModule:
-    """风控过滤模块：拦截违规内容、图片、钓鱼链接和诱导分享。"""
+    """安全过滤模块：拦截违规内容、图片、钓鱼链接和诱导分享。"""
 
     # 常见钓鱼链接特征
     DEFAULT_FISHING_PATTERNS = [
@@ -28,7 +26,7 @@ class SecurityModule:
         "不转不是", "转发可得", "分享领取",
     ]
 
-    def __init__(self, ctx: PluginContext, config: SecurityConfig) -> None:
+    def __init__(self, ctx: PluginContext, config) -> None:
         self._ctx = ctx
         self._config = config
         # 编译正则

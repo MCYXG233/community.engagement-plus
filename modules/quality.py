@@ -1,4 +1,4 @@
-"""模块2: 质量优化 — 表情去重、复读合并、链接去重"""
+"""模块2: 消息优化 — 链接去重、关键词高亮、长文折叠"""
 
 from __future__ import annotations
 
@@ -9,13 +9,11 @@ from typing import TYPE_CHECKING, Any, Dict
 if TYPE_CHECKING:
     from maibot_sdk.context import PluginContext
 
-    from ..config import QualityConfig
-
 
 class QualityModule:
-    """质量优化模块：优化消息质量，减少重复和冗余内容。"""
+    """消息优化模块：链接去重、关键词高亮、长文折叠。"""
 
-    def __init__(self, ctx: PluginContext, config: QualityConfig) -> None:
+    def __init__(self, ctx: PluginContext, config) -> None:
         self._ctx = ctx
         self._config = config
         # stream_id -> 最近消息队列 (type, content, user_id, timestamp)

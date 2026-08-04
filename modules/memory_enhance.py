@@ -7,8 +7,6 @@ from typing import TYPE_CHECKING, Any, Dict, List
 if TYPE_CHECKING:
     from maibot_sdk.context import PluginContext
 
-    from ..config import MemoryConfig
-
 
 def _safe_format_value(value: Any) -> str:
     """安全格式化 person.get_value 返回值。"""
@@ -28,7 +26,7 @@ def _safe_format_value(value: Any) -> str:
 class MemoryEnhanceModule:
     """记忆增强模块：增强对话记忆、用户画像聚合和共同回忆。"""
 
-    def __init__(self, ctx: PluginContext, config: MemoryConfig) -> None:
+    def __init__(self, ctx: PluginContext, config) -> None:
         self._ctx = ctx
         self._config = config
 

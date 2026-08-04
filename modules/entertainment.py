@@ -12,8 +12,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 if TYPE_CHECKING:
     from maibot_sdk.context import PluginContext
 
-    from ..config import EntertainmentConfig
-
 from .privacy import _KEY_PREFIX
 
 
@@ -73,7 +71,7 @@ class EntertainmentModule:
         "12-31": "跨年快乐！告别旧岁，迎接新年！🎆",
     }
 
-    def __init__(self, ctx: PluginContext, config: EntertainmentConfig) -> None:
+    def __init__(self, ctx: PluginContext, config) -> None:
         self._ctx = ctx
         self._config = config
         # stream_id -> 当前投票

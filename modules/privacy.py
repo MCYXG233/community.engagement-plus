@@ -10,8 +10,6 @@ from typing import TYPE_CHECKING, Any, Dict, List
 if TYPE_CHECKING:
     from maibot_sdk.context import PluginContext
 
-    from ..config import PrivacyConfig
-
 # 本插件所有持久化键的统一前缀，防止误删其他插件数据
 _KEY_PREFIX = "community_engagement_"
 
@@ -41,7 +39,7 @@ DEFAULT_SENSITIVE_PATTERNS = [
 class PrivacyModule:
     """隐私保护模块：敏感词脱敏、用户数据导出和注销清理。"""
 
-    def __init__(self, ctx: PluginContext, config: PrivacyConfig) -> None:
+    def __init__(self, ctx: PluginContext, config) -> None:
         self._ctx = ctx
         self._config = config
         # 编译脱敏正则

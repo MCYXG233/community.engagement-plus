@@ -8,8 +8,6 @@ from typing import TYPE_CHECKING, Any, Dict, List
 if TYPE_CHECKING:
     from maibot_sdk.context import PluginContext
 
-    from ..config import AtmosphereConfig
-
 
 async def _safe_get_person_name(ctx: PluginContext, user_id: str, fallback: str = "") -> str:
     """安全获取用户名称，兼容不同 SDK 返回格式。"""
@@ -34,9 +32,10 @@ async def _safe_get_person_name(ctx: PluginContext, user_id: str, fallback: str 
 class AtmosphereModule:
     """氛围监测模块：监测群聊活跃度、欢迎新人、召回潜水用户。"""
 
-    def __init__(self, ctx: PluginContext, config: AtmosphereConfig) -> None:
+    def __init__(self, ctx: PluginContext, atmosphere_config, welcome_config) -> None:
         self._ctx = ctx
-        self._config = config
+        self._atmosphere_config = atmosphere_config
+        self._welcome_config = welcome_config
         # stream_id -> {user_id: last_active_timestamp}
         self._user_activity: Dict[str, Dict[str, float]] = {}
         # stream_id -> {user_id: first_seen_timestamp}
@@ -119,7 +118,7 @@ class AtmosphereModule:
 
     async def check_new_user(self, message: dict) -> str | None:
         """检查是否为新用户首次发言，返回欢迎消息或 None。"""
-        if not self._config.enabled or not self._config.welcome_enabled:
+        if not self._atmosphere_config.enabled or not self._welcome_config.enabled:
             return None
 
         user_id = self._extract_user_id(message)
@@ -197,7 +196,7 @@ class AtmosphereModule:
 
     async def get_sentiment_dashboard(self, stream_id: str) -> str:
         """获取群聊情绪仪表盘。调用外部情绪分析 API。"""
-        api_url = self._config.sentiment_api_url
+        api_url = self._atmosphere_config.sentiment_api_url
         if not api_url:
             return "情绪分析未配置（请设置 sentiment_api_url）"
 
@@ -220,8 +219,8 @@ class AtmosphereModule:
         try:
             import aiohttp
             headers = {"Content-Type": "application/json"}
-            if self._config.sentiment_api_key:
-                headers["Authorization"] = f"Bearer {self._config.sentiment_api_key}"
+            if self._atmosphere_config.sentiment_api_key:
+                headers["Authorization"] = f"Bearer {self._atmosphere_config.sentiment_api_key}"
 
             payload = {"text": combined}
             async with aiohttp.ClientSession() as session:

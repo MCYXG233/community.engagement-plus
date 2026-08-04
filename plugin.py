@@ -46,15 +46,15 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
         """插件加载：初始化 10 个模块实例"""
         self.ctx.logger.info("社区互动增强插件加载中...")
 
-        # 初始化各模块
-        self._rhythm = RhythmModule(self.ctx, self.config.rhythm)
-        self._quality = QualityModule(self.ctx, self.config.quality)
-        self._entertainment = EntertainmentModule(self.ctx, self.config.entertainment)
-        self._atmosphere = AtmosphereModule(self.ctx, self.config.atmosphere)
+        # 初始化各模块（使用新配置结构）
+        self._rhythm = RhythmModule(self.ctx, self.config.message_control)
+        self._quality = QualityModule(self.ctx, self.config.message_optimize)
+        self._entertainment = EntertainmentModule(self.ctx, self.config.fun)
+        self._atmosphere = AtmosphereModule(self.ctx, self.config.atmosphere, self.config.welcome)
         self._memory = MemoryEnhanceModule(self.ctx, self.config.memory)
         self._security = SecurityModule(self.ctx, self.config.security)
-        self._input_parse = InputParseModule(self.ctx, self.config.input_parse)
-        self._output_format = OutputFormatModule(self.ctx, self.config.output_format)
+        self._input_parse = InputParseModule(self.ctx)  # 无需配置
+        self._output_format = OutputFormatModule(self.ctx, self.config.message_optimize)
         self._persona = PersonaModule(self.ctx, self.config.persona)
         self._privacy = PrivacyModule(self.ctx, self.config.privacy)
 

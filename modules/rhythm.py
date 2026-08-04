@@ -1,4 +1,4 @@
-"""模块1: 节奏控制 — 发言节流、复读检测、刷屏拦截、冷场提醒"""
+"""模块1: 发言管理 — 节流、刷屏拦截、复读检测、冷场提醒"""
 
 from __future__ import annotations
 
@@ -9,13 +9,11 @@ from typing import TYPE_CHECKING, Any, Dict
 if TYPE_CHECKING:
     from maibot_sdk.context import PluginContext
 
-    from ..config import RhythmConfig
-
 
 class RhythmModule:
-    """节奏控制模块：管理群聊发言频率和消息节奏。"""
+    """发言管理模块：节流、刷屏拦截、复读检测、冷场提醒。"""
 
-    def __init__(self, ctx: PluginContext, config: RhythmConfig) -> None:
+    def __init__(self, ctx: PluginContext, config) -> None:
         self._ctx = ctx
         self._config = config
         # user_id -> 消息时间戳队列
@@ -89,7 +87,7 @@ class RhythmModule:
         if not timestamps:
             return False
         last_time = timestamps[-1]
-        return (now - last_time) < self._config.throttle_interval
+        return (now - last_time) < self._config.throttle_seconds
 
     def _is_flooding(self, user_id: str, stream_id: str, now: float) -> bool:
         """检查用户是否在刷屏（10秒内超过阈值）。"""
@@ -126,7 +124,7 @@ class RhythmModule:
                     same_text_users.add(uid)
 
         user_count = len(same_text_users) + 1  # 包括当前用户
-        if user_count >= self._config.repeat_detection_count:
+        if user_count >= self._config.repeat_threshold:
             if same_text_count > user_count:
                 return f"复读合并：{user_count} 人共发送 {same_text_count} 条相同消息"
             return f"检测到复读行为（{user_count} 人发送了相同内容）"
@@ -156,7 +154,7 @@ class RhythmModule:
 
         由 maisaka.proactive.trigger 定时调用。
         """
-        if not self._config.enabled:
+        if not self._config.enabled or not self._config.silence_reminder:
             return None
 
         now = time.time()
@@ -165,7 +163,7 @@ class RhythmModule:
             return None
 
         silence_minutes = (now - last_time) / 60
-        threshold = self._config.silence_reminder_minutes
+        threshold = self._config.silence_minutes
 
         if silence_minutes < threshold:
             return None

@@ -7,8 +7,6 @@ from typing import TYPE_CHECKING, Any, Dict
 if TYPE_CHECKING:
     from maibot_sdk.context import PluginContext
 
-    from ..config import PersonaConfig
-
 # 预设人格模板
 PERSONA_TEMPLATES: Dict[str, str] = {
     "元气": (
@@ -43,7 +41,7 @@ class PersonaModule:
         "neutral": None,  # 不切换
     }
 
-    def __init__(self, ctx: PluginContext, config: PersonaConfig) -> None:
+    def __init__(self, ctx: PluginContext, config) -> None:
         self._ctx = ctx
         self._config = config
         # stream_id -> 当前人格名称

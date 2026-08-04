@@ -1,4 +1,4 @@
-"""模块7: 输入解析 — @ 检测、回复上下文、引用追溯、多消息合并"""
+"""模块7: 消息解析 — @ 检测、回复上下文、引用追溯、多消息合并"""
 
 from __future__ import annotations
 
@@ -9,15 +9,15 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 if TYPE_CHECKING:
     from maibot_sdk.context import PluginContext
 
-    from ..config import InputParseConfig
-
 
 class InputParseModule:
-    """输入解析模块：解析消息中的 @、回复上下文等结构化信息，支持多消息合并。"""
+    """消息解析模块：解析消息中的 @、回复上下文等结构化信息，支持多消息合并。"""
 
-    def __init__(self, ctx: PluginContext, config: InputParseConfig) -> None:
+    # 默认合并窗口（秒）
+    DEFAULT_MERGE_WINDOW = 5
+
+    def __init__(self, ctx: PluginContext) -> None:
         self._ctx = ctx
-        self._config = config
         # stream_id -> 最近消息队列 (user_id, text, timestamp)
         self._recent_buffer: Dict[str, deque] = {}
 
@@ -28,9 +28,6 @@ class InputParseModule:
             "reply_context": None,
             "is_reply": False,
         }
-
-        if not self._config.enabled:
-            return result
 
         # 解析 @ 检测
         result["mentions"] = self._parse_mentions(message)
@@ -50,11 +47,11 @@ class InputParseModule:
 
         返回合并后的文本，或 None 表示还在缓冲中。
         """
-        if not self._config.enabled or not text:
+        if not text:
             return None
 
         now = time.time()
-        window = self._config.merge_window
+        window = self.DEFAULT_MERGE_WINDOW
 
         if stream_id not in self._recent_buffer:
             self._recent_buffer[stream_id] = deque()

@@ -180,6 +180,34 @@ class AtmosphereModule:
 
         return "\n".join(lines)
 
+    async def check_anniversaries(self, stream_id: str) -> list[str]:
+        """检查今天是否有用户周年纪念日，返回祝福列表。
+
+        通过比对用户首次发言日期和今天是否为同月同日来判断。
+        """
+        today = time.strftime("%m-%d")
+        results: list[str] = []
+
+        known = self._known_users.get(stream_id, {})
+        for uid, first_seen in known.items():
+            import datetime
+            first_date = datetime.datetime.fromtimestamp(first_seen)
+            if first_date.strftime("%m-%d") == today:
+                years = datetime.date.today().year - first_date.year
+                if years > 0:
+                    name = uid
+                    try:
+                        person_id = await self._ctx.person.get_id("unknown", uid)
+                        if person_id:
+                            nickname = await self._ctx.person.get_value(person_id, "name")
+                            if nickname:
+                                name = nickname
+                    except Exception:
+                        pass
+                    results.append(f"{name} 加入群聊 {years} 周年！🎉")
+
+        return results
+
     def _get_timestamp(self, message: dict) -> float:
         """从消息中提取时间戳。"""
         ts = message.get("timestamp", "0")

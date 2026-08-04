@@ -24,6 +24,10 @@ class RhythmModule:
         self._recent_texts: Dict[str, deque] = {}
         # user_id -> 上次刷屏警告时间
         self._flood_warnings: Dict[str, float] = {}
+        # stream_id -> 最后一条消息的时间戳（用于冷场检测）
+        self._last_message_time: Dict[str, float] = {}
+        # stream_id -> 上次冷场提醒时间（避免重复提醒）
+        self._last_silence_alert: Dict[str, float] = {}
 
     async def check_message(self, message: dict) -> dict | None:
         """检查消息是否应被拦截。返回 None 表示放行，返回修改后的 message 表示拦截。
@@ -64,6 +68,10 @@ class RhythmModule:
         # 记录消息
         if user_id:
             self._record_message(user_id, stream_id, text, now)
+
+        # 更新最后消息时间
+        if stream_id:
+            self._last_message_time[stream_id] = now
 
         return message
 
@@ -136,8 +144,38 @@ class RhythmModule:
         """发送提醒消息。"""
         await self._ctx.send.text(text, stream_id)
 
+    async def check_silence(self, stream_id: str) -> str | None:
+        """检查群是否冷场，返回提醒文本或 None。
+
+        由 maisaka.proactive.trigger 定时调用。
+        """
+        if not self._config.enabled:
+            return None
+
+        now = time.time()
+        last_time = self._last_message_time.get(stream_id, 0)
+        if last_time == 0:
+            return None
+
+        silence_minutes = (now - last_time) / 60
+        threshold = self._config.silence_reminder_minutes
+
+        if silence_minutes < threshold:
+            return None
+
+        # 避免重复提醒（30分钟内只提醒一次）
+        last_alert = self._last_silence_alert.get(stream_id, 0)
+        if (now - last_alert) < 1800:
+            return None
+
+        self._last_silence_alert[stream_id] = now
+        minutes = int(silence_minutes)
+        return f"群已经安静了 {minutes} 分钟了，来聊点什么吧~"
+
     async def cleanup(self) -> None:
         """清理资源。"""
         self._user_messages.clear()
         self._recent_texts.clear()
         self._flood_warnings.clear()
+        self._last_message_time.clear()
+        self._last_silence_alert.clear()

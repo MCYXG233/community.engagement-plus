@@ -177,6 +177,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
             "/活跃榜 [天数] — 查看活跃排行\n"
             "/群温度 — 查看群活跃温度\n"
             "/潜水 [天数] — 查看潜水用户\n"
+            "/周年 — 今日周年纪念\n"
             "━━━ 记忆增强 ━━━\n"
             "/画像 [用户] — 查看用户画像\n"
             "/回顾 — 共同记忆回顾\n"
@@ -314,6 +315,17 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
         result = await self._atmosphere.get_lurkers(stream_id, days)
         await self.ctx.send.text(result, stream_id)
         return True, result, 2
+
+    @Command("周年", description="查看今日周年纪念", pattern=r"^/周年\s*$")
+    async def handle_anniversary(self, stream_id: str = "", **kwargs) -> tuple:
+        """查看今日周年纪念。"""
+        results = await self._atmosphere.check_anniversaries(stream_id)
+        if results:
+            msg = "今日周年纪念：\n" + "\n".join(f"  - {r}" for r in results)
+        else:
+            msg = "今天没有周年纪念日"
+        await self.ctx.send.text(msg, stream_id)
+        return True, msg, 2
 
     # ─── 记忆增强命令 ──────────────────────────────────────
 

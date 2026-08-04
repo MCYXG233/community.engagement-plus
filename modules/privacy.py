@@ -130,23 +130,43 @@ class PrivacyModule:
             return f"导出失败: {e}"
 
     async def delete_user_data(self, user_id: str) -> str:
-        """注销并清理本插件中该用户的相关数据。"""
+        """注销并清理本插件中该用户的相关数据。
+
+        先查询所有本插件前缀的记录，再本地过滤包含 user_id 的键。
+        """
         deleted_count = 0
 
         try:
-            # 只删除本插件前缀的记录，避免误伤其他插件数据
-            search_pattern = f"{_KEY_PREFIX}{user_id}"
-            results = await self._ctx.db.query(
+            # 查询所有本插件前缀的记录（DB __contains 匹配前缀）
+            all_records = await self._ctx.db.query(
                 "PluginData",
-                query_type="count",
-                filters={"key__contains": search_pattern},
+                query_type="get",
+                filters={"key__contains": _KEY_PREFIX},
             )
-            if results and results > 0:
-                await self._ctx.db.delete(
-                    "PluginData",
-                    filters={"key__contains": search_pattern},
-                )
-                deleted_count += results
+
+            # 处理查询结果
+            records_to_delete = []
+            if isinstance(all_records, list):
+                for record in all_records:
+                    key = record.get("key", "") if isinstance(record, dict) else ""
+                    if key and _KEY_PREFIX in key and user_id in key:
+                        records_to_delete.append(key)
+            elif isinstance(all_records, dict) and all_records:
+                key = all_records.get("key", "")
+                if key and _KEY_PREFIX in key and user_id in key:
+                    records_to_delete.append(key)
+
+            # 逐条删除匹配的记录
+            for key in records_to_delete:
+                try:
+                    await self._ctx.db.delete(
+                        "PluginData",
+                        filters={"key": key},
+                    )
+                    deleted_count += 1
+                except Exception:
+                    pass
+
         except Exception as e:
             self._ctx.logger.warning(f"清理用户数据失败: {e}")
 

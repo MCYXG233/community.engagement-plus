@@ -63,15 +63,23 @@ class QualityModule:
         }
 
         new_urls = []
+        duplicate_urls = []
         for url in urls:
             key = (stream_id, url)
             if key not in self._seen_urls:
                 self._seen_urls[key] = now
                 new_urls.append(url)
+            else:
+                duplicate_urls.append(url)
 
-        if not new_urls and urls:
-            return ""
-        return text
+        # 移除重复 URL 但保留其余文本
+        if duplicate_urls:
+            for url in duplicate_urls:
+                text = text.replace(url, "").strip()
+            # 清理多余空格
+            text = " ".join(text.split())
+
+        return text if text else None
 
     def merge_repeated(self, messages: list[dict], stream_id: str) -> list[dict]:
         """合并连续相同内容的消息。返回合并后的消息列表。"""

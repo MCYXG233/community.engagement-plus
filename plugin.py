@@ -54,7 +54,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
         self._memory = MemoryEnhanceModule(self.ctx, self.config.memory)
         self._security = SecurityModule(self.ctx, self.config.security)
         self._input_parse = InputParseModule(self.ctx)  # 无需配置
-        self._output_format = OutputFormatModule(self.ctx, self.config.message_optimize)
+        self._output_format = OutputFormatModule(self.ctx, self.config.message_optimize, self.config.translate)
         self._persona = PersonaModule(self.ctx, self.config.persona)
         self._privacy = PrivacyModule(self.ctx, self.config.privacy)
 
@@ -207,7 +207,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
     # ─── Commands ───────────────────────────────────────────
 
     @Command("社区帮助", description="查看所有社区互动命令", pattern=r"^/社区帮助\s*$")
-    async def handle_help(self, stream_id: str = "", **kwargs) -> None:
+    async def handle_help(self, stream_id: str = "", **kwargs) -> tuple:
         """显示帮助信息。"""
         help_text = (
             "社区互动增强 — 命令帮助\n"

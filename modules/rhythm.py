@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING, Any, Dict
 if TYPE_CHECKING:
     from maibot_sdk.context import PluginContext
 
+from ._utils import extract_user_id
+
 
 class RhythmModule:
     """发言管理模块：节流、刷屏拦截、复读检测、冷场提醒。"""
@@ -73,9 +75,7 @@ class RhythmModule:
 
     def _extract_user_id(self, message: dict) -> str:
         """从消息中提取用户 ID。"""
-        msg_info = message.get("message_info", {})
-        user_info = msg_info.get("user_info", {})
-        return user_info.get("user_id", "")
+        return extract_user_id(message)
 
     def _extract_text(self, message: dict) -> str:
         """从消息中提取纯文本。"""

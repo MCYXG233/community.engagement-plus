@@ -8,25 +8,7 @@ from typing import TYPE_CHECKING, Any, Dict, List
 if TYPE_CHECKING:
     from maibot_sdk.context import PluginContext
 
-
-async def _safe_get_person_name(ctx: PluginContext, user_id: str, fallback: str = "") -> str:
-    """安全获取用户名称，兼容不同 SDK 返回格式。"""
-    try:
-        person_id = await ctx.person.get_id("unknown", user_id)
-        if not person_id:
-            return fallback
-        result = await ctx.person.get_value(person_id, "name")
-        if isinstance(result, str):
-            return result
-        if isinstance(result, dict):
-            return result.get("value", result.get("name", fallback))
-        if hasattr(result, "name"):
-            return str(result.name)
-        if hasattr(result, "value"):
-            return str(result.value)
-        return str(result) if result else fallback
-    except Exception:
-        return fallback
+from ._utils import safe_get_person_name, extract_user_id
 
 
 class AtmosphereModule:
@@ -111,7 +93,7 @@ class AtmosphereModule:
         medals = ["🥇", "🥈", "🥉"]
         for i, (uid, count) in enumerate(sorted_users):
             prefix = medals[i] if i < 3 else f"  {i + 1}."
-            name = await _safe_get_person_name(self._ctx, uid, fallback=uid)
+            name = await safe_get_person_name(self._ctx, uid, fallback=uid)
             lines.append(f"{prefix} {name} — {count} 条消息")
 
         return "\n".join(lines)
@@ -139,8 +121,12 @@ class AtmosphereModule:
         self._known_users[stream_id][user_id] = now
 
         # 获取用户名
-        name = await _safe_get_person_name(self._ctx, user_id, fallback="新朋友")
+        name = await safe_get_person_name(self._ctx, user_id, fallback="新朋友")
 
+        # 使用配置的欢迎模板
+        template = self._welcome_config.welcome_template
+        if "{name}" in template:
+            return template.format(name=name)
         return f"欢迎 {name} 加入群聊！发送 /社区帮助 查看可用命令"
 
     async def get_lurkers(self, stream_id: str, days: int = 7) -> str:
@@ -169,7 +155,7 @@ class AtmosphereModule:
 
         lines = [f"潜水用户（{len(lurkers)} 人超过 {days} 天未发言）："]
         for uid in lurkers[:20]:
-            name = await _safe_get_person_name(self._ctx, uid, fallback=uid)
+            name = await safe_get_person_name(self._ctx, uid, fallback=uid)
             lines.append(f"  - {name}")
 
         return "\n".join(lines)
@@ -189,7 +175,7 @@ class AtmosphereModule:
             if first_date.strftime("%m-%d") == today:
                 years = datetime.date.today().year - first_date.year
                 if years > 0:
-                    name = await _safe_get_person_name(self._ctx, uid, fallback=uid)
+                    name = await safe_get_person_name(self._ctx, uid, fallback=uid)
                     results.append(f"{name} 加入群聊 {years} 周年！🎉")
 
         return results
@@ -254,9 +240,7 @@ class AtmosphereModule:
 
     def _extract_user_id(self, message: dict) -> str:
         """从消息中提取用户 ID。"""
-        msg_info = message.get("message_info", {})
-        user_info = msg_info.get("user_info", {})
-        return user_info.get("user_id", "")
+        return extract_user_id(message)
 
     async def cleanup(self) -> None:
         """清理资源。"""

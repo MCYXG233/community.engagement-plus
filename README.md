@@ -1,4 +1,4 @@
-# 社区互动增强插件 v1.1.0
+# 社区互动增强插件 v1.2.0
 
 > **插件说明**：CommunityEngagementPlus 是 MaiBot 第三方社区互动增强插件，提供 10 大功能模块。
 >
@@ -10,125 +10,127 @@
 
 ## 功能说明
 
-- **节奏控制**：发言节流、刷屏拦截、复读检测、冷场提醒
-- **质量优化**：表情去重、复读合并、链接去重
-- **互动娱乐**：投票、抽奖、打卡、早安晚安、接龙
-- **氛围监测**：群温度计、活跃榜、新人欢迎、潜水党召回
-- **记忆增强**：用户画像聚合、共同记忆回顾
-- **风控过滤**：关键词屏蔽、钓鱼链接拦截、诱导分享检测
-- **输入解析**：@ 检测、回复上下文提取、引用追溯
-- **输出美化**：分段发送、长文折叠、表情插入
-- **人格切换**：元气/毒舌/温柔/学术 四套预设人格
-- **隐私保护**：敏感词脱敏、数据导出、注销清理
+| 模块 | 功能 | 是否需要配置 |
+|------|------|-------------|
+| **发言管理** | 节流、刷屏拦截、复读检测、冷场提醒 | 无需额外配置 |
+| **消息优化** | 链接去重、关键词高亮、长文折叠 | 无需额外配置 |
+| **互动娱乐** | 投票、抽奖、打卡、早安晚安、接龙、节日彩蛋 | 无需额外配置 |
+| **新人欢迎** | 检测新用户首次发言并发送欢迎消息 | 可自定义欢迎模板 |
+| **氛围监测** | 群温度、活跃榜、潜水检测、情绪分析 | 情绪分析需 API |
+| **记忆增强** | 用户画像、共同回忆、跨会话同步 | LLM 生成摘要 |
+| **安全过滤** | 屏蔽词、钓鱼链接检测、图片审核 | 图片审核需 API |
+| **翻译** | 按需翻译最近一条消息 | 翻译需 API |
+| **人格切换** | 元气/毒舌/温柔/学术 四套预设人格 | LLM 心情分析 |
+| **隐私保护** | 敏感词脱敏、数据导出、注销清理 | 无需额外配置 |
 
 ---
 
 ## 快速开始
 
-1. 安装 SDK：`pip install maibot-plugin-sdk>=2.7.1`
-2. 将 `CommunityEngagementPlus` 放入 MaiBot 插件目录（`plugins/` 文件夹）。
+1. 将插件放入 MaiBot 插件目录：
    ```bash
    cd plugins
-   git clone git@github.com:MCYXG233/community.engagement-plus.git CommunityEngagementPlus
+   git clone https://github.com/MCYXG233/community.engagement-plus.git CommunityEngagementPlus
    ```
-3. 启动 MaiBot，插件会自动加载。
-4. 在群聊中发送 `/社区帮助` 查看所有可用命令。
+2. 重启 MaiBot，插件会自动加载
+3. 在群聊中发送 `/社区帮助` 查看所有可用命令
 
 ---
 
-## 插件配置
+## 配置说明
 
-在 MaiBot WebUI 插件设置页配置，每个配置项都有标签、输入提示和范围约束。
+在 MaiBot WebUI 插件设置页配置。配置分为 11 个模块：
 
-### plugin 基础配置
-
-| 配置项 | 说明 | 默认值 |
-|--------|------|--------|
-| `enabled` | 是否启用插件 | `true` |
-
-### rhythm 节奏控制
+### 通用设置 (`general`)
 
 | 配置项 | 说明 | 默认值 |
 |--------|------|--------|
-| `enabled` | 是否启用节奏控制 | `true` |
-| `throttle_interval` | 发言节流间隔（秒），1~60 | `3` |
-| `flood_threshold` | 刷屏阈值（条/10秒），2~50 | `5` |
-| `repeat_detection_count` | 复读检测阈值（人），2~20 | `2` |
-| `silence_reminder_minutes` | 冷场提醒阈值（分钟），5~1440 | `30` |
+| `enabled` | 启用插件 | `true` |
 
-### quality 质量优化
+### 发言管理 (`message_control`)
 
 | 配置项 | 说明 | 默认值 |
 |--------|------|--------|
-| `enabled` | 是否启用质量优化 | `true` |
-| `dedup_window` | 链接去重窗口（秒），10~600 | `60` |
-| `highlight_keywords` | 高亮关键词，逗号分隔 | 空 |
+| `enabled` | 启用发言管理 | `true` |
+| `throttle_seconds` | 发言最小间隔（秒） | `3` |
+| `flood_threshold` | 刷屏阈值（条/10秒） | `5` |
+| `repeat_threshold` | 复读检测阈值（人） | `2` |
+| `silence_reminder` | 启用冷场提醒 | `true` |
+| `silence_minutes` | 冷场提醒阈值（分钟） | `30` |
 
-### entertainment 互动娱乐
-
-| 配置项 | 说明 | 默认值 |
-|--------|------|--------|
-| `enabled` | 是否启用互动娱乐 | `true` |
-
-### atmosphere 氛围监测
+### 消息优化 (`message_optimize`)
 
 | 配置项 | 说明 | 默认值 |
 |--------|------|--------|
-| `enabled` | 是否启用氛围监测 | `true` |
-| `welcome_enabled` | 新人欢迎开关 | `true` |
-| `sentiment_api_url` | 情绪分析 API 地址（留空禁用） | 空 |
-| `sentiment_api_key` | 情绪分析 API Key | 空 |
+| `enabled` | 启用消息优化 | `true` |
+| `dedup_window` | 链接去重窗口（秒） | `60` |
+| `highlight_keywords` | 高亮关键词列表 | `[]` |
+| `max_length` | 长文折叠阈值（字符） | `500` |
 
-### memory 记忆增强
-
-| 配置项 | 说明 | 默认值 |
-|--------|------|--------|
-| `enabled` | 是否启用记忆增强 | `true` |
-| `profile_fields` | 画像统计字段，逗号分隔 | `活跃时段,常用表情,发言主题` |
-| `cross_session_sync` | 跨会话记忆同步（开启后 LLM 可跨会话搬运上下文） | `true` |
-
-### security 风控过滤
+### 互动娱乐 (`fun`)
 
 | 配置项 | 说明 | 默认值 |
 |--------|------|--------|
-| `enabled` | 是否启用风控过滤 | `true` |
-| `blocked_words` | 屏蔽词列表，逗号分隔 | 空 |
-| `fishing_url_patterns` | 钓鱼链接正则，留空使用内置规则 | 空 |
-| `image_check_api_url` | 图片审核 API 地址（留空禁用） | 空 |
-| `image_check_api_key` | 图片审核 API Key | 空 |
+| `enabled` | 启用互动娱乐 | `true` |
+| `holiday_eggs` | 启用节日彩蛋 | `true` |
 
-### input_parse 输入解析
+### 新人欢迎 (`welcome`)
 
 | 配置项 | 说明 | 默认值 |
 |--------|------|--------|
-| `enabled` | 是否启用输入解析 | `true` |
-| `merge_window` | 多消息合并窗口（秒），1~30 | `5` |
+| `enabled` | 启用新人欢迎 | `true` |
+| `welcome_template` | 欢迎消息模板（`{name}` 替换为用户名） | `欢迎 {name} 加入群聊！...` |
 
-### output_format 输出美化
-
-| 配置项 | 说明 | 默认值 |
-|--------|------|--------|
-| `enabled` | 是否启用输出美化 | `true` |
-| `max_length` | 长文折叠阈值（字符），100~5000 | `500` |
-| `translate_api_url` | 翻译 API 地址（留空禁用，使用 /翻译 命令按需翻译） | 空 |
-| `translate_api_key` | 翻译 API Key | 空 |
-| `translate_target_lang` | 翻译目标语言 | `en` |
-
-### persona 人格切换
+### 氛围监测 (`atmosphere`)
 
 | 配置项 | 说明 | 默认值 |
 |--------|------|--------|
-| `enabled` | 是否启用人格切换 | `true` |
-| `default_persona` | 默认人格（元气/毒舌/温柔/学术） | `元气` |
-| `mood_driven` | 心情驱动人格（LLM 自动切换） | `true` |
+| `enabled` | 启用氛围监测 | `true` |
+| `sentiment_api_url` | 情绪分析 API 地址 | `""` |
+| `sentiment_api_key` | 情绪分析 API Key | `""` |
 
-### privacy 隐私保护
+### 记忆增强 (`memory`)
 
 | 配置项 | 说明 | 默认值 |
 |--------|------|--------|
-| `enabled` | 是否启用隐私保护 | `true` |
-| `sensitive_patterns` | 脱敏正则，留空使用内置规则（手机号/邮箱/身份证） | 空 |
-| `encrypt_profiles` | 画像加密（Base64 混淆） | `false` |
+| `enabled` | 启用记忆增强 | `true` |
+| `profile_fields` | 画像统计字段 | `["活跃时段", "常用表情", "发言主题"]` |
+| `cross_session_sync` | 启用跨会话同步 | `false` |
+
+### 安全过滤 (`security`)
+
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| `enabled` | 启用安全过滤 | `true` |
+| `blocked_words` | 屏蔽词列表 | `[]` |
+| `fishing_url_patterns` | 钓鱼链接正则 | `[]`（使用内置规则） |
+| `image_check_api_url` | 图片审核 API 地址 | `""` |
+| `image_check_api_key` | 图片审核 API Key | `""` |
+
+### 翻译 (`translate`)
+
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| `enabled` | 启用翻译功能 | `false` |
+| `api_url` | 翻译 API 地址 | `""` |
+| `api_key` | 翻译 API Key | `""` |
+| `target_lang` | 目标语言代码 | `en` |
+
+### 人格切换 (`persona`)
+
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| `enabled` | 启用人格切换 | `false` |
+| `default_persona` | 默认人格 | `元气` |
+| `mood_driven` | 启用心情驱动 | `false` |
+
+### 隐私保护 (`privacy`)
+
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| `enabled` | 启用隐私保护 | `true` |
+| `sensitive_patterns` | 脱敏正则 | `[]`（使用内置规则） |
+| `encrypt_profiles` | 画像编码（Base64） | `false` |
 
 ---
 
@@ -147,6 +149,7 @@
 | `/连续打卡` | 查看连续打卡天数 |
 | `/早安` | 早安问候（LLM 生成） |
 | `/晚安` | 晚安问候（LLM 生成） |
+| `/节日` | 今日节日彩蛋 |
 | `/接龙 <内容>` | 发起接龙 |
 | `/加入接龙 <内容>` | 参与接龙 |
 
@@ -157,13 +160,15 @@
 | `/活跃榜 [天数]` | 查看活跃排行 |
 | `/群温度` | 查看群活跃温度 |
 | `/潜水 [天数]` | 查看潜水用户 |
+| `/周年` | 今日周年纪念 |
+| `/情绪` | 情绪仪表盘（需配置 API） |
 
 ### 记忆增强
 
 | 命令 | 说明 |
 |------|------|
 | `/画像 [用户]` | 查看用户画像 |
-| `/回顾` | 共同记忆回顾 |
+| `/回顾` | 共同记忆回顾（LLM 生成） |
 
 ### 人格切换
 
@@ -171,114 +176,189 @@
 |------|------|
 | `/切换人格 <名称>` | 切换人格（元气/毒舌/温柔/学术） |
 | `/当前人格` | 查看当前人格 |
+| `/心情` | 检测当前心情 |
 
-### 隐私保护
+### 其他
 
 | 命令 | 说明 |
 |------|------|
+| `/翻译` | 翻译最近一条消息（需配置 API） |
 | `/导出数据` | 导出用户数据 |
 | `/注销` | 注销并清理数据 |
-
-### 通用
-
-| 命令 | 说明 |
-|------|------|
 | `/社区帮助` | 查看所有命令帮助 |
 
 ---
 
-## 使用建议
+## 外部 API 配置
 
-- 强烈建议在更新插件前备份当前插件文件，以免意外丢失。
-- 风控过滤的屏蔽词和钓鱼链接正则可在配置文件中自定义。
-- 人格切换仅影响当前聊天流，不同群可设置不同人格。
-- 打卡数据和投票数据存储在 MaiBot 数据库中，卸载插件不会丢失。
-- **跨会话同步**（`cross_session_sync`）：开启后 LLM 可通过 `@Tool(sync_cross_session)` 在任意会话间搬运用户上下文。管理员应知晓开启后的信息流动范围——同步会将源会话中用户的关键发言摘要注入目标会话的上下文。
-- **链接去重**：`_deduplicate_urls` 使用子串替换移除重复 URL，极端情况下（如 `https://example.com` 和 `https://example.com/path` 同时出现）可能误伤后者。如遇链接显示异常可优先排查此处。
+以下功能需要配置外部 API 才能使用：
+
+### 情绪分析 API
+
+用于 `/情绪` 命令，分析群聊情绪。
+
+- **格式**：兼容 OpenAI Chat Completions 格式
+- **请求**：`POST {sentiment_api_url}`，Body: `{"messages": [{"role": "user", "content": "..."}]}`
+- **响应**：`{"choices": [{"message": {"content": "positive"}}]}`
+- **推荐模型**：GPT-3.5-turbo、Claude-3-Haiku、Qwen-turbo
+- **费用**：约 $0.001/次（GPT-3.5-turbo）
+
+### 图片审核 API
+
+用于安全过滤，检测违规图片。
+
+- **格式**：接收 base64 图片，返回审核结果
+- **请求**：`POST {image_check_api_url}`，Body: `{"image": "base64..."}`
+- **响应**：`{"label": "safe"}` 或 `{"label": "nsfw"}`
+- **推荐服务**：阿里云内容安全、腾讯云天御、百度内容审核
+- **费用**：约 ¥0.001/张
+
+### 翻译 API
+
+用于 `/翻译` 命令，翻译消息内容。
+
+- **格式**：兼容 DeepL/百度翻译等
+- **请求**：`POST {api_url}`，Body: `{"text": "...", "target_lang": "en"}`
+- **响应**：`{"translation": "..."}`
+- **推荐服务**：DeepL API、百度翻译、腾讯翻译
+- **费用**：DeepL 免费额度 50万字符/月
 
 ---
 
-## 隐私与数据说明
+## LLM 使用说明
 
-本插件默认**不**向外部发送任何数据。以下功能在启用后会将用户数据发送到第三方 API，**需管理员自行配置 API 地址和密钥**（默认留空即禁用）：
+以下功能会调用 LLM：
 
-| 功能 | 配置项 | 发送的数据 | 说明 |
-|------|--------|-----------|------|
-| 图片鉴黄 | `security.image_check_api_url` | 消息中的图片 base64 | 发送到配置的审核 API，用于检测违规图片 |
-| 情绪分析 | `atmosphere.sentiment_api_url` | 最近 20 条消息文本 | 发送到配置的情绪分析 API，用于生成情绪仪表盘 |
-| 翻译备注 | `output_format.translate_api_url` | 输出消息文本 | 发送到配置的翻译 API，自动附加翻译备注 |
+| 功能 | 触发方式 | 预估 Token 消耗 |
+|------|----------|----------------|
+| 早安/晚安问候 | `/早安` `/晚安` | ~100 tokens |
+| 记忆回顾 | `/回顾` | ~500 tokens |
+| 心情驱动人格 | 每条消息（需开启） | ~50 tokens/条 |
+| 跨会话同步 | 手动调用 | ~200 tokens |
 
-**请注意：**
-- 以上 API 地址和密钥由管理员在 MaiBot WebUI 中配置，插件不会自动启用
-- 启用前请确认第三方 API 的隐私政策和数据处理方式
-- 图片 base64 数据体积较大（可能数 MB），建议配置内网或可信 API，并注意带宽和延迟成本
-- 所有数据仅在 API 调用时传输，插件不存储外部 API 的响应数据
+**建议**：
+- 心情驱动人格默认关闭，避免大量 LLM 调用
+- 使用经济型模型（如 GPT-3.5-turbo、Qwen-turbo）即可满足需求
+- MaiBot 已配置的 LLM 会自动使用，无需额外配置
+
+---
+
+## 命令列表
+
+### 互动娱乐
+
+| 命令 | 说明 |
+|------|------|
+| `/投票 <选项1> <选项2> ...` | 发起投票 |
+| `/投票1` `/投票2` ... | 对应选项投票 |
+| `/投票结果` | 查看投票结果 |
+| `/结束投票` | 结束当前投票 |
+| `/抽奖 [人数]` | 随机抽取幸运用户 |
+| `/打卡` | 每日签到打卡 |
+| `/连续打卡` | 查看连续打卡天数 |
+| `/早安` | 早安问候（LLM 生成） |
+| `/晚安` | 晚安问候（LLM 生成） |
+| `/节日` | 今日节日彩蛋 |
+| `/接龙 <内容>` | 发起接龙 |
+| `/加入接龙 <内容>` | 参与接龙 |
+
+### 氛围监测
+
+| 命令 | 说明 |
+|------|------|
+| `/活跃榜 [天数]` | 查看活跃排行 |
+| `/群温度` | 查看群活跃温度 |
+| `/潜水 [天数]` | 查看潜水用户 |
+| `/周年` | 今日周年纪念 |
+| `/情绪` | 情绪仪表盘（需配置 API） |
+
+### 记忆增强
+
+| 命令 | 说明 |
+|------|------|
+| `/画像 [用户]` | 查看用户画像 |
+| `/回顾` | 共同记忆回顾（LLM 生成） |
+
+### 人格切换
+
+| 命令 | 说明 |
+|------|------|
+| `/切换人格 <名称>` | 切换人格（元气/毒舌/温柔/学术） |
+| `/当前人格` | 查看当前人格 |
+| `/心情` | 检测当前心情 |
+
+### 其他
+
+| 命令 | 说明 |
+|------|------|
+| `/翻译` | 翻译最近一条消息（需配置 API） |
+| `/导出数据` | 导出用户数据 |
+| `/注销` | 注销并清理数据 |
+| `/社区帮助` | 查看所有命令帮助 |
 
 ---
 
 ## 更新日志
 
+### 版本 1.2.0
+
+**配置重构**
+
+- 重命名配置模块：`rhythm` → `message_control`、`quality` → `message_optimize`、`entertainment` → `fun`
+- 新增 `welcome` 独立配置模块
+- 翻译配置从 `output_format` 拆分为独立 `translate` 模块
+- 字段名优化：`throttle_interval` → `throttle_seconds`、`repeat_detection_count` → `repeat_threshold`
+- 新增开关：`silence_reminder`、`holiday_eggs`
+- 默认值优化：`persona`/`translate`/`cross_session_sync`/`mood_driven` 默认关闭
+
+**功能修复**
+
+- 修复翻译配置属性名不匹配导致运行时崩溃
+- 优化 `_calc_streak` 性能：从 365 次 DB 查询改为 1 次
+- 修复 `handle_help` 返回类型不一致
+- 修复欢迎模板配置未生效
+- 提取共享工具函数到 `_utils.py`，消除代码重复
+
+**代码质量**
+
+- 所有模块使用共享工具函数：`safe_get_person_name`、`safe_format_value`、`extract_user_id`
+- 移除重复定义的工具函数
+
 ### 版本 1.1.0
 
 **功能补全**
 
-- 冷场提醒：跟踪每个群的最后消息时间，超过阈值时触发提醒
-- 周年纪念：检测用户首次发言日期，匹配时生成周年祝福
-- 节日彩蛋：7 个节日（新年/情人节/劳动节/儿童节/国庆/圣诞/跨年）
-- 情绪仪表盘：调用外部 API 分析群聊情绪
-- 翻译备注：`/翻译` 按需翻译最近一条消息
-- 图片鉴黄：调用外部 API 审核违规图片
-- 关键词高亮：配置的关键词添加 【】 标记
-- 多消息合并：缓冲窗口期内同一用户的连续消息
-- 跨会话记忆同步：LLM 提取关键信息并同步到其他会话
-- 心情驱动人格：LLM 情感分析自动切换人格
-- 画像加密：Base64 编码保护用户画像数据
-- 撤回检测：检测消息撤回并通知
-- /节日、/周年、/情绪、/心情、/翻译 命令
-- @Tool(check_silence)：LLM 可调用冷场状态查询
-- @Tool(sync_cross_session)：LLM 可调用跨会话同步
-
-**代码修复**
-
-- 导入修复：`HookMode`/`HookOrder`/`ToolParameterInfo`/`ToolParamType` 改从 `maibot_sdk.types` 导入
-- 隐私修复：`delete_user_data` 限定只删 `community_engagement_` 前缀的数据
-- 隐私修复：`/注销` 同时清理 PluginData 表和 entertainment.json
-- 配置修复：`scope` 比较使用 `CONFIG_RELOAD_SCOPE_SELF` 常量
-- Tool 修复：所有 `@Tool` 使用 `brief_description`（文档推荐）
-- 持久化修复：`load_persistent_data` 恢复投票和接龙状态到内存
-- 性能修复：`_calc_streak` 用 `count` 替代 `get`，遇中断即停止
-- 多 Bot 协调：非 @ 非命令消息跳过复读检测，但消息仍被记录
-- segment 修复：`maisaka.context.append` 字段从 `data` 改为 `content`（对齐 SDK 文档）
-- 复读检测修复：`_record_message` 移到多 Bot 协调判断之前，所有消息都参与记录
-- 翻译修复：从 HookHandler 自动调用改为 `/翻译` 按需命令（避免超时阻塞发送）
-- 链接去重修复：`check_outgoing` 返回空字符串时不再被 `or text` 回退
-- 前缀统一：`entertainment.py` 从 `privacy.py` 导入 `_KEY_PREFIX`，不再硬编码
-- 管道接入：`quality.check_outgoing`、`input_parse.parse`、`input_parse.buffer_message` 接入 HookHandler
-- 移除空壳：`hook_input_parse` 空钩子、不完整的 `split_remaining` 逻辑
+- 冷场提醒、周年纪念、节日彩蛋、情绪仪表盘、翻译备注、图片鉴黄、关键词高亮、多消息合并、跨会话记忆同步、心情驱动人格、画像加密、撤回检测
+- 新增命令：/节日、/周年、/情绪、/心情、/翻译
+- 新增 Tool：check_silence、sync_cross_session
 
 **配置扩展**
 
-- 新增外部 API 配置：图片审核、情绪分析、翻译（用户自填 URL + Key，默认禁用）
+- 新增外部 API 配置：图片审核、情绪分析、翻译
 - 新增功能开关：心情驱动、跨会话同步、画像加密、关键词高亮、多消息合并
-- 配置版本升级至 1.1.0
-
-**文档与合规**
-
-- README 新增「隐私与数据说明」章节，列出外部 API 数据流向和带宽提示
-- manifest `i18n` 保留必填字段 `default_locale`（暂不实现多语言）
-- manifest capabilities 从 30 项精简到 11 项（仅实际使用）
-- 所有 Command 处理函数补全返回三元组 `(success, response, weight)`
 
 ### 版本 1.0.0
 
-- 完成 10 大功能模块开发：节奏控制、质量优化、互动娱乐、氛围监测、记忆增强、风控过滤、输入解析、输出美化、人格切换、隐私保护
+- 完成 10 大功能模块开发
 - 使用 `@Tool`/`@Command`/`@EventHandler`/`@HookHandler` 装饰器
-- 使用 `PluginConfigBase` 定义强类型配置（11 个配置节）
-- 实现三个必需的生命周期方法：`on_load()`、`on_unload()`、`on_config_update()`
-- 添加 `create_plugin()` 工厂函数
-- 通过 `ctx.*` 能力代理复用 MaiBot 原生能力（db/llm/person/message/maisaka/emoji/frequency）
-- 22 个 Command + 2 个 EventHandler + 2 个 HookHandler + 4 个 Tool
-- 投票/接龙数据持久化，打卡记录存入数据库
+- 使用 `PluginConfigBase` 定义强类型配置
+
+---
+
+## 隐私与数据说明
+
+本插件默认**不**向外部发送任何数据。以下功能在启用后会将数据发送到第三方 API：
+
+| 功能 | 配置项 | 发送的数据 |
+|------|--------|-----------|
+| 情绪分析 | `atmosphere.sentiment_api_url` | 最近 20 条消息文本 |
+| 图片审核 | `security.image_check_api_url` | 消息中的图片 base64 |
+| 翻译 | `translate.api_url` | 输出消息文本 |
+
+**请注意**：
+- 以上 API 需管理员在配置中填入地址和密钥，默认留空即禁用
+- 启用前请确认第三方 API 的隐私政策
+- 所有数据仅在 API 调用时传输，插件不存储外部 API 响应
 
 ---
 

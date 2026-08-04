@@ -11,17 +11,18 @@ if TYPE_CHECKING:
 class OutputFormatModule:
     """消息美化模块：优化消息输出格式。"""
 
-    def __init__(self, ctx: PluginContext, config) -> None:
+    def __init__(self, ctx: PluginContext, optimize_config, translate_config) -> None:
         self._ctx = ctx
-        self._config = config
+        self._optimize_config = optimize_config
+        self._translate_config = translate_config
 
     async def format_output(self, text: str, stream_id: str) -> str:
         """格式化输出消息（仅本地操作，不调用外部 API）。"""
-        if not self._config.enabled or not text:
+        if not self._optimize_config.enabled or not text:
             return text
 
         # 长文折叠
-        if len(text) > self._config.max_length:
+        if len(text) > self._optimize_config.max_length:
             text = self._fold_text(text)
 
         # 表情插入
@@ -38,7 +39,7 @@ class OutputFormatModule:
 
     def _fold_text(self, text: str) -> str:
         """长文折叠：超过阈值时添加折叠标记。"""
-        max_len = self._config.max_length
+        max_len = self._optimize_config.max_length
         if len(text) <= max_len:
             return text
 
@@ -80,19 +81,19 @@ class OutputFormatModule:
 
     async def _translate(self, text: str) -> str | None:
         """调用外部翻译 API。返回翻译结果或 None。"""
-        api_url = self._config.translate_api_url
+        api_url = self._translate_config.api_url
         if not api_url:
             return None
 
         try:
             import aiohttp
             headers = {"Content-Type": "application/json"}
-            if self._config.translate_api_key:
-                headers["Authorization"] = f"Bearer {self._config.translate_api_key}"
+            if self._translate_config.api_key:
+                headers["Authorization"] = f"Bearer {self._translate_config.api_key}"
 
             payload = {
                 "text": text,
-                "target_lang": self._config.translate_target_lang,
+                "target_lang": self._translate_config.target_lang,
             }
             async with aiohttp.ClientSession() as session:
                 async with session.post(api_url, json=payload, headers=headers, timeout=10) as resp:

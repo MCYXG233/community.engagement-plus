@@ -10,23 +10,10 @@ from typing import TYPE_CHECKING, Any, Dict, List
 if TYPE_CHECKING:
     from maibot_sdk.context import PluginContext
 
+from ._utils import safe_format_value
+
 # 本插件所有持久化键的统一前缀，防止误删其他插件数据
 _KEY_PREFIX = "community_engagement_"
-
-
-def _safe_format_value(value: Any) -> Any:
-    """安全格式化 person.get_value 返回值，保留原始类型但确保可序列化。"""
-    if value is None:
-        return None
-    if isinstance(value, str):
-        return value
-    if isinstance(value, dict):
-        return value.get("value", value.get("name", value))
-    if hasattr(value, "value"):
-        return str(value.value)
-    if hasattr(value, "name"):
-        return str(value.name)
-    return value
 
 # 默认敏感词脱敏模式
 DEFAULT_SENSITIVE_PATTERNS = [
@@ -123,7 +110,7 @@ class PrivacyModule:
                 # 获取用户基本信息
                 for field in ["name", "state"]:
                     value = await self._ctx.person.get_value(person_id, field)
-                    formatted = _safe_format_value(value)
+                    formatted = safe_format_value(value)
                     if formatted:
                         data["data"][field] = formatted
         except Exception as e:

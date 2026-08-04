@@ -7,20 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict, List
 if TYPE_CHECKING:
     from maibot_sdk.context import PluginContext
 
-
-def _safe_format_value(value: Any) -> str:
-    """安全格式化 person.get_value 返回值。"""
-    if value is None:
-        return ""
-    if isinstance(value, str):
-        return value
-    if isinstance(value, dict):
-        return value.get("value", value.get("name", str(value)))
-    if hasattr(value, "value"):
-        return str(value.value)
-    if hasattr(value, "name"):
-        return str(value.name)
-    return str(value)
+from ._utils import safe_format_value, extract_user_id
 
 
 class MemoryEnhanceModule:
@@ -40,7 +27,7 @@ class MemoryEnhanceModule:
             if person_id:
                 for field_name in self._config.profile_fields:
                     value = await self._ctx.person.get_value(person_id, field_name)
-                    formatted = _safe_format_value(value)
+                    formatted = safe_format_value(value)
                     if formatted:
                         profile_parts.append(f"  {field_name}: {formatted}")
         except Exception as e:
@@ -157,9 +144,7 @@ class MemoryEnhanceModule:
 
     def _extract_user_id(self, message: dict) -> str:
         """从消息中提取用户 ID。"""
-        msg_info = message.get("message_info", {})
-        user_info = msg_info.get("user_info", {})
-        return user_info.get("user_id", "")
+        return extract_user_id(message)
 
     def _get_hour(self, message: dict) -> int:
         """从消息中提取小时数。"""

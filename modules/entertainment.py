@@ -12,27 +12,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 if TYPE_CHECKING:
     from maibot_sdk.context import PluginContext
 
+from ._utils import safe_get_person_name
 from .privacy import _KEY_PREFIX
-
-
-async def _safe_get_person_name(ctx: PluginContext, user_id: str, fallback: str = "") -> str:
-    """安全获取用户名称，兼容不同 SDK 返回格式。"""
-    try:
-        person_id = await ctx.person.get_id("unknown", user_id)
-        if not person_id:
-            return fallback
-        result = await ctx.person.get_value(person_id, "name")
-        if isinstance(result, str):
-            return result
-        if isinstance(result, dict):
-            return result.get("value", result.get("name", fallback))
-        if hasattr(result, "name"):
-            return str(result.name)
-        if hasattr(result, "value"):
-            return str(result.value)
-        return str(result) if result else fallback
-    except Exception:
-        return fallback
 
 
 @dataclass
@@ -162,7 +143,7 @@ class EntertainmentModule:
         picked = random.sample(users, min(count, len(users)))
         results = []
         for uid in picked:
-            name = await _safe_get_person_name(self._ctx, uid, fallback=uid)
+            name = await safe_get_person_name(self._ctx, uid, fallback=uid)
             results.append(name)
 
         return f"抽奖结果（共 {len(results)} 人）：\n" + "\n".join(f"  - {r}" for r in results)
@@ -210,18 +191,34 @@ class EntertainmentModule:
         if cache_key in self._streak_cache:
             return self._streak_cache[cache_key]
 
+        # 优化：一次查询所有打卡记录，然后在代码层计算连续天数
+        prefix = f"{_KEY_PREFIX}checkin_{stream_id}_{user_id}_"
+        all_records = await self._ctx.db.query(
+            "PluginData",
+            query_type="get",
+            data={},
+            filters={},
+            limit=1000,
+        )
+
+        # 提取打卡日期
+        checkin_dates = set()
+        if isinstance(all_records, list):
+            for record in all_records:
+                key = record.get("key", "") if isinstance(record, dict) else ""
+                if key.startswith(prefix):
+                    # 提取日期部分: prefix + YYYY-MM-DD
+                    date_str = key[len(prefix):]
+                    if len(date_str) == 10:  # YYYY-MM-DD
+                        checkin_dates.add(date_str)
+
+        # 计算连续天数（从今天往回数）
         streak = 0
         today = datetime.date.today()
-
         for i in range(365):
             day = today - datetime.timedelta(days=i)
             date_str = day.strftime("%Y-%m-%d")
-            key = f"{_KEY_PREFIX}checkin_{stream_id}_{user_id}_{date_str}"
-            count = await self._ctx.db.count(
-                "PluginData",
-                filters={"key": key},
-            )
-            if count and count > 0:
+            if date_str in checkin_dates:
                 streak += 1
             else:
                 break
@@ -234,7 +231,7 @@ class EntertainmentModule:
     async def greeting(self, stream_id: str, user_id: str, greeting_type: str) -> str:
         """生成早安/晚安问候。"""
         # 获取用户信息
-        name = await _safe_get_person_name(self._ctx, user_id, fallback="你")
+        name = await safe_get_person_name(self._ctx, user_id, fallback="你")
 
         # 使用 LLM 生成个性化问候
         prompt = f"请用简短、温暖的中文生成一句{greeting_type}问候语，称呼「{name}」，不超过30字。"

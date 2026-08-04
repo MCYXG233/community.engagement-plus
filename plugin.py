@@ -173,7 +173,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
             msg_info = message.get("message_info", {})
             user_info = msg_info.get("user_info", {})
             user_id = user_info.get("user_id", "")
-            stream_id = message.get("session_id", "")
+            stream_id = message.get("stream_id", message.get("session_id", ""))
             text = message.get("processed_plain_text", "") or ""
             if user_id and stream_id and text:
                 merged = self._input_parse.buffer_message(stream_id, user_id, text)

@@ -132,19 +132,20 @@ class PrivacyModule:
     async def delete_user_data(self, user_id: str) -> str:
         """注销并清理本插件中该用户的相关数据。
 
-        先查询所有本插件前缀的记录，再本地过滤包含 user_id 的键。
+        清理范围：
+        1. PluginData 表中本插件前缀且含 user_id 的记录（打卡等）
+        2. entertainment.json 中该用户的投票和接龙数据
         """
         deleted_count = 0
 
+        # 1. 清理 PluginData 表中的打卡记录
         try:
-            # 查询所有本插件前缀的记录（DB __contains 匹配前缀）
             all_records = await self._ctx.db.query(
                 "PluginData",
                 query_type="get",
                 filters={"key__contains": _KEY_PREFIX},
             )
 
-            # 处理查询结果
             records_to_delete = []
             if isinstance(all_records, list):
                 for record in all_records:
@@ -156,7 +157,6 @@ class PrivacyModule:
                 if key and _KEY_PREFIX in key and user_id in key:
                     records_to_delete.append(key)
 
-            # 逐条删除匹配的记录
             for key in records_to_delete:
                 try:
                     await self._ctx.db.delete(
@@ -166,9 +166,40 @@ class PrivacyModule:
                     deleted_count += 1
                 except Exception:
                     pass
-
         except Exception as e:
-            self._ctx.logger.warning(f"清理用户数据失败: {e}")
+            self._ctx.logger.warning(f"清理 PluginData 失败: {e}")
+
+        # 2. 清理 entertainment.json 中的用户数据
+        try:
+            data_dir = self._ctx.paths.data_dir
+            ent_file = data_dir / "entertainment.json"
+            if ent_file.exists():
+                data = json.loads(ent_file.read_text(encoding="utf-8"))
+                modified = False
+
+                # 清理投票中的用户投票记录
+                for sid, vote_data in data.get("votes", {}).items():
+                    votes = vote_data.get("votes", {})
+                    if user_id in votes:
+                        del votes[user_id]
+                        modified = True
+
+                # 清理接龙中的用户参与记录
+                for sid, chain_data in data.get("chains", {}).items():
+                    entries = chain_data.get("entries", [])
+                    new_entries = [e for e in entries if e.get("user_id") != user_id]
+                    if len(new_entries) != len(entries):
+                        chain_data["entries"] = new_entries
+                        modified = True
+
+                if modified:
+                    ent_file.write_text(
+                        json.dumps(data, ensure_ascii=False, indent=2),
+                        encoding="utf-8",
+                    )
+                    deleted_count += 1
+        except Exception as e:
+            self._ctx.logger.warning(f"清理 entertainment.json 失败: {e}")
 
         return f"已清理 {deleted_count} 条用户数据"
 

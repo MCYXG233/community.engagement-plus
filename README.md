@@ -366,3 +366,43 @@
 
 - MaiBot 团队：[Mai-with-u/maibot](https://github.com/MaiM-with-u/maibot)
 - MaiBot Plugin SDK：[maibot-plugin-sdk](https://github.com/Mai-with-u/maibot-plugin-sdk)
+
+---
+
+## SDK 对接说明
+
+本插件完全对接 MaiBot Plugin SDK v2.7.1：
+
+### 已对接的 SDK 能力
+
+| 能力 | 用途 |
+|------|------|
+| `ctx.send.text` | 发送文本消息 |
+| `ctx.message.get_recent` | 获取最近消息 |
+| `ctx.message.get_by_id` | 获取单条消息 |
+| `ctx.message.build_readable` | 构建可读消息 |
+| `ctx.person.get_id` | 获取用户 ID |
+| `ctx.person.get_value` | 获取用户信息 |
+| `ctx.db.query/save/delete` | 数据库操作 |
+| `ctx.llm.generate` | LLM 文本生成 |
+| `ctx.maisaka.context.append` | 追加上下文 |
+| `ctx.logger` | 日志记录 |
+| `ctx.paths.data_dir` | 数据目录 |
+
+### 装饰器使用
+
+- `@Command` - 15 个命令
+- `@EventHandler` - 3 个事件处理器
+- `@HookHandler` - 3 个钩子处理器
+- `@Tool` - 6 个 LLM 工具
+
+### 生命周期
+
+- `on_load()` - 插件加载
+- `on_unload()` - 插件卸载
+- `on_config_update()` - 配置热更新
+- `create_plugin()` - 工厂函数
+
+### 人格系统对接
+
+通过 HookHandler `maisaka.replyer.before_model_request` 在 LLM 请求前注入人格指令，与官方人格系统完全兼容。

@@ -10,6 +10,21 @@ if TYPE_CHECKING:
     from ..config import MemoryConfig
 
 
+def _safe_format_value(value: Any) -> str:
+    """安全格式化 person.get_value 返回值。"""
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        return value.get("value", value.get("name", str(value)))
+    if hasattr(value, "value"):
+        return str(value.value)
+    if hasattr(value, "name"):
+        return str(value.name)
+    return str(value)
+
+
 class MemoryEnhanceModule:
     """记忆增强模块：增强对话记忆、用户画像聚合和共同回忆。"""
 
@@ -27,8 +42,9 @@ class MemoryEnhanceModule:
             if person_id:
                 for field_name in self._config.profile_fields:
                     value = await self._ctx.person.get_value(person_id, field_name)
-                    if value:
-                        profile_parts.append(f"  {field_name}: {value}")
+                    formatted = _safe_format_value(value)
+                    if formatted:
+                        profile_parts.append(f"  {field_name}: {formatted}")
         except Exception as e:
             self._ctx.logger.warning(f"读取用户画像失败: {e}")
 

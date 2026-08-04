@@ -128,7 +128,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
         """检查新用户并发送欢迎消息。"""
         welcome = await self._atmosphere.check_new_user(message)
         if welcome:
-            stream_id = message.get("session_id", "")
+            stream_id = message.get("stream_id", message.get("session_id", ""))
             if stream_id:
                 await self.ctx.send.text(welcome, stream_id)
 
@@ -148,7 +148,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
         if is_recall:
             user_info = message.get("message_info", {}).get("user_info", {})
             nickname = user_info.get("user_nickname", "未知用户")
-            stream_id = message.get("session_id", "")
+            stream_id = message.get("stream_id", message.get("session_id", ""))
             self.ctx.logger.info(f"[撤回检测] {nickname} 撤回了一条消息")
             if stream_id:
                 await self.ctx.send.text(f"📋 {nickname} 撤回了一条消息", stream_id)
@@ -393,7 +393,7 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
         return True, result, 2
 
     @Command("回顾", description="共同记忆回顾", pattern=r"^/回顾\s*$")
-    async def handle_recall(self, stream_id: str = "", **kwargs) -> tuple:
+    async def handle_memory_recall(self, stream_id: str = "", **kwargs) -> tuple:
         """共同记忆回顾。"""
         result = await self._memory.memory_recall(stream_id)
         await self.ctx.send.text(result, stream_id)

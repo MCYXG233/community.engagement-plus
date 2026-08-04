@@ -38,7 +38,7 @@ class RhythmModule:
             return message
 
         user_id = self._extract_user_id(message)
-        stream_id = message.get("session_id", "")
+        stream_id = message.get("stream_id", message.get("session_id", ""))
         text = self._extract_text(message)
         now = time.time()
 

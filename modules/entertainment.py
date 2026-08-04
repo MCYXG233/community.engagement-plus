@@ -17,6 +17,26 @@ if TYPE_CHECKING:
 from .privacy import _KEY_PREFIX
 
 
+async def _safe_get_person_name(ctx: PluginContext, user_id: str, fallback: str = "") -> str:
+    """安全获取用户名称，兼容不同 SDK 返回格式。"""
+    try:
+        person_id = await ctx.person.get_id("unknown", user_id)
+        if not person_id:
+            return fallback
+        result = await ctx.person.get_value(person_id, "name")
+        if isinstance(result, str):
+            return result
+        if isinstance(result, dict):
+            return result.get("value", result.get("name", fallback))
+        if hasattr(result, "name"):
+            return str(result.name)
+        if hasattr(result, "value"):
+            return str(result.value)
+        return str(result) if result else fallback
+    except Exception:
+        return fallback
+
+
 @dataclass
 class VoteSession:
     """投票会话。"""
@@ -144,12 +164,7 @@ class EntertainmentModule:
         picked = random.sample(users, min(count, len(users)))
         results = []
         for uid in picked:
-            person_id = await self._ctx.person.get_id("unknown", uid)
-            name = uid
-            if person_id:
-                nickname = await self._ctx.person.get_value(person_id, "name")
-                if nickname:
-                    name = nickname
+            name = await _safe_get_person_name(self._ctx, uid, fallback=uid)
             results.append(name)
 
         return f"抽奖结果（共 {len(results)} 人）：\n" + "\n".join(f"  - {r}" for r in results)
@@ -171,10 +186,12 @@ class EntertainmentModule:
             return "今天已经打卡过了！"
 
         # 保存打卡记录
-        await self._ctx.db.save("PluginData", data={
-            "key": check_in_key,
-            "value": json.dumps({"user_id": user_id, "date": today}),
-        })
+        await self._ctx.db.save(
+            "PluginData",
+            data={"value": json.dumps({"user_id": user_id, "date": today})},
+            key_field="key",
+            key_value=check_in_key,
+        )
 
         # 查询连续打卡天数
         streak = await self._calc_streak(stream_id, user_id)
@@ -201,12 +218,11 @@ class EntertainmentModule:
             day = today - datetime.timedelta(days=i)
             date_str = day.strftime("%Y-%m-%d")
             key = f"{_KEY_PREFIX}checkin_{stream_id}_{user_id}_{date_str}"
-            result = await self._ctx.db.query(
+            count = await self._ctx.db.count(
                 "PluginData",
-                query_type="count",
                 filters={"key": key},
             )
-            if result and result > 0:
+            if count and count > 0:
                 streak += 1
             else:
                 break
@@ -219,12 +235,7 @@ class EntertainmentModule:
     async def greeting(self, stream_id: str, user_id: str, greeting_type: str) -> str:
         """生成早安/晚安问候。"""
         # 获取用户信息
-        person_id = await self._ctx.person.get_id("unknown", user_id)
-        name = "你"
-        if person_id:
-            nickname = await self._ctx.person.get_value(person_id, "name")
-            if nickname:
-                name = nickname
+        name = await _safe_get_person_name(self._ctx, user_id, fallback="你")
 
         # 使用 LLM 生成个性化问候
         prompt = f"请用简短、温暖的中文生成一句{greeting_type}问候语，称呼「{name}」，不超过30字。"

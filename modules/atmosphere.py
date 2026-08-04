@@ -11,6 +11,26 @@ if TYPE_CHECKING:
     from ..config import AtmosphereConfig
 
 
+async def _safe_get_person_name(ctx: PluginContext, user_id: str, fallback: str = "") -> str:
+    """安全获取用户名称，兼容不同 SDK 返回格式。"""
+    try:
+        person_id = await ctx.person.get_id("unknown", user_id)
+        if not person_id:
+            return fallback
+        result = await ctx.person.get_value(person_id, "name")
+        if isinstance(result, str):
+            return result
+        if isinstance(result, dict):
+            return result.get("value", result.get("name", fallback))
+        if hasattr(result, "name"):
+            return str(result.name)
+        if hasattr(result, "value"):
+            return str(result.value)
+        return str(result) if result else fallback
+    except Exception:
+        return fallback
+
+
 class AtmosphereModule:
     """氛围监测模块：监测群聊活跃度、欢迎新人、召回潜水用户。"""
 
@@ -92,16 +112,7 @@ class AtmosphereModule:
         medals = ["🥇", "🥈", "🥉"]
         for i, (uid, count) in enumerate(sorted_users):
             prefix = medals[i] if i < 3 else f"  {i + 1}."
-            # 尝试获取用户名
-            name = uid
-            try:
-                person_id = await self._ctx.person.get_id("unknown", uid)
-                if person_id:
-                    nickname = await self._ctx.person.get_value(person_id, "name")
-                    if nickname:
-                        name = nickname
-            except Exception:
-                pass
+            name = await _safe_get_person_name(self._ctx, uid, fallback=uid)
             lines.append(f"{prefix} {name} — {count} 条消息")
 
         return "\n".join(lines)
@@ -112,7 +123,7 @@ class AtmosphereModule:
             return None
 
         user_id = self._extract_user_id(message)
-        stream_id = message.get("session_id", "")
+        stream_id = message.get("stream_id", message.get("session_id", ""))
         if not user_id or not stream_id:
             return None
 
@@ -129,15 +140,7 @@ class AtmosphereModule:
         self._known_users[stream_id][user_id] = now
 
         # 获取用户名
-        name = "新朋友"
-        try:
-            person_id = await self._ctx.person.get_id("unknown", user_id)
-            if person_id:
-                nickname = await self._ctx.person.get_value(person_id, "name")
-                if nickname:
-                    name = nickname
-        except Exception:
-            pass
+        name = await _safe_get_person_name(self._ctx, user_id, fallback="新朋友")
 
         return f"欢迎 {name} 加入群聊！发送 /社区帮助 查看可用命令"
 
@@ -167,15 +170,7 @@ class AtmosphereModule:
 
         lines = [f"潜水用户（{len(lurkers)} 人超过 {days} 天未发言）："]
         for uid in lurkers[:20]:
-            name = uid
-            try:
-                person_id = await self._ctx.person.get_id("unknown", uid)
-                if person_id:
-                    nickname = await self._ctx.person.get_value(person_id, "name")
-                    if nickname:
-                        name = nickname
-            except Exception:
-                pass
+            name = await _safe_get_person_name(self._ctx, uid, fallback=uid)
             lines.append(f"  - {name}")
 
         return "\n".join(lines)
@@ -195,15 +190,7 @@ class AtmosphereModule:
             if first_date.strftime("%m-%d") == today:
                 years = datetime.date.today().year - first_date.year
                 if years > 0:
-                    name = uid
-                    try:
-                        person_id = await self._ctx.person.get_id("unknown", uid)
-                        if person_id:
-                            nickname = await self._ctx.person.get_value(person_id, "name")
-                            if nickname:
-                                name = nickname
-                    except Exception:
-                        pass
+                    name = await _safe_get_person_name(self._ctx, uid, fallback=uid)
                     results.append(f"{name} 加入群聊 {years} 周年！🎉")
 
         return results

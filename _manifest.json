@@ -29,5 +29,8 @@
     "person.get_id", "person.get_value",
     "maisaka.context.append"
   ],
+  "i18n": {
+    "default_locale": "zh-CN"
+  },
   "id": "small_sunshine.community.engagement-plus"
 }

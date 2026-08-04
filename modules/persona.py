@@ -1,35 +1,35 @@
-"""模块9: 人格切换 — 人格模板、语气调节、风格迁移"""
+"""模块9: 人格切换 — 与官方人格系统对接"""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, List
 
 if TYPE_CHECKING:
     from maibot_sdk.context import PluginContext
 
-# 预设人格模板
+# 预设人格模板 - 注入到 system prompt 后的人格指令
 PERSONA_TEMPLATES: Dict[str, str] = {
     "元气": (
-        "你是元气满满的角色，说话活泼积极，喜欢用感叹号和表情符号。"
+        "[人格指令] 你现在是元气满满的角色，说话活泼积极，喜欢用感叹号和表情符号。"
         "回复风格：热情、开朗、充满正能量，适当使用颜文字和 emoji。"
     ),
     "毒舌": (
-        "你是毒舌吐槽风格的角色，说话犀利幽默，擅长一针见血的吐槽。"
+        "[人格指令] 你现在是毒舌吐槽风格的角色，说话犀利幽默，擅长一针见血的吐槽。"
         "回复风格：讽刺、幽默、犀利，但不恶意攻击，保持有趣。"
     ),
     "温柔": (
-        "你是温柔体贴的角色，说话温和有耐心，善解人意。"
+        "[人格指令] 你现在是温柔体贴的角色，说话温和有耐心，善解人意。"
         "回复风格：温暖、关怀、细腻，多用语气词如「呢」「哦」「呀」。"
     ),
     "学术": (
-        "你是学术严谨的角色，说话专业清晰，逻辑性强。"
+        "[人格指令] 你现在是学术严谨的角色，说话专业清晰，逻辑性强。"
         "回复风格：严谨、专业、条理清晰，引用数据和事实，避免主观臆断。"
     ),
 }
 
 
 class PersonaModule:
-    """人格切换模块：管理群聊人格状态、风格注入和心情驱动。"""
+    """人格切换模块：通过 HookHandler 注入人格指令到 LLM 请求。"""
 
     # 心情到人格的映射
     MOOD_PERSONA_MAP = {
@@ -62,38 +62,48 @@ class PersonaModule:
         """获取当前人格名称。"""
         return self._personas.get(stream_id, self._config.default_persona)
 
-    async def inject_persona(self, stream_id: str) -> None:
-        """注入人格指令到对话上下文。
+    def get_persona_prompt(self, stream_id: str) -> str | None:
+        """获取当前聊天流的人格指令。"""
+        persona_name = self._personas.get(stream_id)
+        if not persona_name:
+            return None
+        return PERSONA_TEMPLATES.get(persona_name)
 
-        先读取用户画像和风格偏好（ctx.person + learners），
-        再融合预设人格模板，通过 maisaka.context.append 追加。
+    async def inject_persona_to_messages(
+        self, messages: List[Dict[str, Any]], stream_id: str
+    ) -> List[Dict[str, Any]]:
+        """将人格指令注入到 LLM 请求的 messages 中。
+
+        在 system prompt 之后插入人格指令，不影响其他消息。
         """
-        persona_name = self.get_current_persona(stream_id)
-        template = PERSONA_TEMPLATES.get(persona_name, PERSONA_TEMPLATES["元气"])
+        if not self._config.enabled:
+            return messages
 
-        # 尝试读取用户画像以融合个性化指令
-        persona_prompt = template
-        try:
-            # 从 ctx.person 读取用户偏好，融合到人格指令中
-            # 如果用户有语言偏好，追加到指令中
-            pass  # 当前版本仅使用预设模板，后续可扩展
-        except Exception as e:
-            self._ctx.logger.warning(f"读取用户画像失败: {e}")
+        persona_prompt = self.get_persona_prompt(stream_id)
+        if not persona_prompt:
+            return messages
 
-        # 通过 maisaka 追加上下文
-        try:
-            await self._ctx.maisaka.context.append(
-                stream_id,
-                [{"type": "text", "content": f"[系统指令] {persona_prompt}"}],
-            )
-        except Exception as e:
-            self._ctx.logger.warning(f"注入人格上下文失败: {e}")
+        # 复制 messages 列表
+        new_messages = list(messages)
+
+        # 找到 system 消息之后的位置插入
+        insert_pos = 0
+        for i, msg in enumerate(messages):
+            if isinstance(msg, dict) and msg.get("role") == "system":
+                insert_pos = i + 1
+            else:
+                break
+
+        # 插入人格指令
+        new_messages.insert(insert_pos, {"role": "system", "content": persona_prompt})
+
+        return new_messages
 
     def list_personas(self) -> str:
         """列出所有可用人格。"""
         lines = ["可用人格："]
         for name, desc in PERSONA_TEMPLATES.items():
-            lines.append(f"  - {name}: {desc[:30]}...")
+            lines.append(f"  - {name}: {desc[:50]}...")
         return "\n".join(lines)
 
     async def detect_mood(self, stream_id: str, text: str) -> str:
@@ -118,7 +128,7 @@ class PersonaModule:
 
             return f"当前心情：{mood}"
         except Exception as e:
-            self._ctx.logger.warning(f"心情检测失败: {e}")
+            self._ctx.logger.warning("心情检测失败: %s", e)
             return "心情检测失败"
 
     def get_mood(self, stream_id: str) -> str:

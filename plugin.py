@@ -18,7 +18,7 @@ from maibot_sdk import (
     PluginConfigBase,
     Tool,
 )
-from maibot_sdk.types import EventType, HookMode, HookOrder, ToolParameterInfo, ToolParamType
+from maibot_sdk.types import ErrorPolicy, EventType, HookMode, HookOrder, ToolParameterInfo, ToolParamType
 
 from .config import CommunityEngagementConfig
 from .log_config import setup_logging, get_logger
@@ -214,6 +214,37 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
             if formatted != text:
                 kwargs["text"] = formatted
         return {"action": "continue", "modified_kwargs": kwargs}
+
+    # ─── HookHandler: 人格注入钩子 ─────────────────────────
+
+    @HookHandler(
+        "maisaka.replyer.before_model_request",
+        name="社区互动_人格注入",
+        mode=HookMode.BLOCKING,
+        order=HookOrder.LATE,  # 在其他 hook 之后执行
+        error_policy=ErrorPolicy.SKIP,
+    )
+    async def hook_persona_inject(self, messages: Any = None, **kwargs) -> dict | None:
+        """在 LLM 请求前注入人格指令。"""
+        if not self._persona or not self._config.persona.enabled:
+            return None
+
+        stream_id = kwargs.get("session_id", "")
+        if not stream_id:
+            return None
+
+        # 检查是否有人格设置
+        persona_prompt = self._persona.get_persona_prompt(stream_id)
+        if not persona_prompt:
+            return None
+
+        # 注入人格指令到 messages
+        if isinstance(messages, list):
+            new_messages = await self._persona.inject_persona_to_messages(messages, stream_id)
+            self._logger.debug("注入人格指令到会话 %s", stream_id)
+            return {"action": "continue", "modified_kwargs": {"messages": new_messages}}
+
+        return None
 
     # ─── Commands ───────────────────────────────────────────
 

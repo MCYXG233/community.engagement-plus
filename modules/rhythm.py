@@ -110,19 +110,28 @@ class RhythmModule:
         return False
 
     def _check_repeat(self, stream_id: str, text: str, user_id: str) -> str | None:
-        """检测复读行为。返回提醒文本或 None。"""
+        """检测复读行为。返回提醒文本或 None。
+
+        统计相同文本的不同发送者数量，达到阈值时提醒。
+        """
         if not text or len(text) < 2:
             return None
 
         recent = self._recent_texts.get(stream_id, deque())
-        # 统计相同文本的发送者
+        # 统计相同文本的发送者和总次数
         same_text_users: set = set()
+        same_text_count = 0
         for t, uid, _ in recent:
-            if t == text and uid != user_id:
-                same_text_users.add(uid)
+            if t == text:
+                same_text_count += 1
+                if uid != user_id:
+                    same_text_users.add(uid)
 
-        if len(same_text_users) >= (self._config.repeat_detection_count - 1):
-            return f"检测到复读行为（{len(same_text_users) + 1} 人发送了相同内容）"
+        user_count = len(same_text_users) + 1  # 包括当前用户
+        if user_count >= self._config.repeat_detection_count:
+            if same_text_count > user_count:
+                return f"复读合并：{user_count} 人共发送 {same_text_count} 条相同消息"
+            return f"检测到复读行为（{user_count} 人发送了相同内容）"
         return None
 
     def _record_message(self, user_id: str, stream_id: str, text: str, now: float) -> None:

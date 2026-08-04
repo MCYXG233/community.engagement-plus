@@ -153,6 +153,34 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
             if stream_id:
                 await self.ctx.send.text(f"📋 {nickname} 撤回了一条消息", stream_id)
 
+    # ─── HookHandler: 入站消息解析钩子 ─────────────────────
+
+    @HookHandler(
+        "chat.receive.before_process",
+        name="社区互动_输入解析",
+        mode=HookMode.BLOCKING,
+        order=HookOrder.NORMAL,
+    )
+    async def hook_input_parse(self, **kwargs) -> dict:
+        """在消息处理前解析输入结构（@ 检测、回复上下文）。"""
+        message = kwargs.get("message", {})
+        if message and self._input_parse:
+            parsed = await self._input_parse.parse(message)
+            # 将解析结果注入 kwargs 供后续使用
+            kwargs["parsed_input"] = parsed
+            # 多消息合并缓冲
+            user_id = ""
+            msg_info = message.get("message_info", {})
+            user_info = msg_info.get("user_info", {})
+            user_id = user_info.get("user_id", "")
+            stream_id = message.get("session_id", "")
+            text = message.get("processed_plain_text", "") or ""
+            if user_id and stream_id and text:
+                merged = self._input_parse.buffer_message(stream_id, user_id, text)
+                if merged:
+                    kwargs["merged_messages"] = merged
+        return {"action": "continue", "modified_kwargs": kwargs}
+
     # ─── HookHandler: 输出美化钩子 ─────────────────────────
 
     @HookHandler(
@@ -172,6 +200,14 @@ class CommunityEngagementPlusPlugin(MaiBotPlugin):
             formatted = await self._output_format.format_output(text, stream_id)
             if formatted != text:
                 kwargs["text"] = formatted
+            # 超长消息分段（超过阈值 2 倍时拆分）
+            max_len = self._output_format._config.max_length
+            if len(formatted) > max_len * 2:
+                parts = await self._output_format.split_long_message(formatted, stream_id)
+                if len(parts) > 1:
+                    kwargs["text"] = parts[0]
+                    # 剩余部分追加到待发队列（通过后续发送）
+                    kwargs["split_remaining"] = parts[1:]
         return {"action": "continue", "modified_kwargs": kwargs}
 
     # ─── Commands ───────────────────────────────────────────
